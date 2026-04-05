@@ -24,6 +24,8 @@ app.use(
     origin:
       "https://frontend-pz3b1ci56-hemantkumawat399-5351s-projects.vercel.app",
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 app.use("/uploads", express.static("uploads"));
