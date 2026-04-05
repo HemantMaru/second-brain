@@ -21,23 +21,8 @@ import cookieParser from "cookie-parser"; // 👈 Ye line missing hai
 const app = express();
 app.use(
   cors({
-    // "*" ke saath credentials: true kabhi-kabhi issue deta hai
-    // Isliye specific origins dalna hamesha better hai
-    origin: function (origin, callback) {
-      const allowedOrigins = [
-        "https://frontend-pz3b1ci56-hemantkumawat399-5351s-projects.vercel.app",
-        "null",
-      ]; // Extension 'null' ya specific ID bhejti hai
-      if (
-        !origin ||
-        allowedOrigins.indexOf(origin) !== -1 ||
-        origin.startsWith("chrome-extension://")
-      ) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin:
+      "https://frontend-pz3b1ci56-hemantkumawat399-5351s-projects.vercel.app",
     credentials: true,
   }),
 );

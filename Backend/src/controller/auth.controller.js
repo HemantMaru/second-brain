@@ -12,6 +12,7 @@ const sendTokenResponse = (user, statusCode, res) => {
     httpOnly: true,
     secure: true,
     sameSite: "None",
+    path: "/",
   };
 
   res
