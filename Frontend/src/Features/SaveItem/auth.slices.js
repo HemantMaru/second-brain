@@ -25,7 +25,6 @@ const authSlice = createSlice({
 
       // Persistence: Browser mein save karo
       localStorage.setItem("nv_user", JSON.stringify(action.payload.user));
-      localStorage.setItem("nv_token", action.payload.token);
     },
     authFailure: (state, action) => {
       state.loading = false;
@@ -36,7 +35,6 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       localStorage.removeItem("nv_user");
-      localStorage.removeItem("nv_token");
     },
   },
 });
