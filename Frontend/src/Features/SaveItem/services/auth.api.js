@@ -3,8 +3,7 @@ import axios from "axios";
 // 1. Axios Instance Setup
 // withCredentials: true zaroori hai taaki browser cookies (JWT) ko backend pe bhej sake
 const API = axios.create({
-  baseURL: "http://localhost:3000/api/auth", // Tera backend auth URL
-  withCredentials: true,
+baseURL: "https://second-brain-uwen.onrender.com/api/auth",  withCredentials: true,
 });
 
 /**

@@ -24,7 +24,13 @@ app.use("/uploads", express.static("public/uploads"));
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Pro touch: form data handle karne ke liye
+app.get("/", (req, res) => {
+  res.send("Server working");
+});
 
+app.get("/test", (req, res) => {
+  res.send("Test route working");
+});
 app.use(
   cors({
     // "*" ke saath credentials: true kabhi-kabhi issue deta hai
