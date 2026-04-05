@@ -36,7 +36,7 @@ app.use(
     // "*" ke saath credentials: true kabhi-kabhi issue deta hai
     // Isliye specific origins dalna hamesha better hai
     origin: function (origin, callback) {
-      const allowedOrigins = ["http://localhost:5173", "null"]; // Extension 'null' ya specific ID bhejti hai
+      const allowedOrigins = [ "https://frontend-pz3b1ci56-hemantkumawat399-5351s-projects.vercel.app" "null"]; // Extension 'null' ya specific ID bhejti hai
       if (
         !origin ||
         allowedOrigins.indexOf(origin) !== -1 ||
