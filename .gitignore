@@ -1,0 +1,24 @@
+# node modules
+node_modules/
+
+# env files (IMPORTANT 🔥)
+.env
+
+# build folders
+dist/
+build/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# uploads
+Backend/uploads/
+
+# optional
+.vscode/
