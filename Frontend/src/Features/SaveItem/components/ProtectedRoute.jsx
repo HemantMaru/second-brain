@@ -4,12 +4,12 @@ import { getMeAPI } from "../services/auth.api";
 
 const ProtectedRoute = ({ children }) => {
   const [loading, setLoading] = useState(true);
-  const [isAuth, setIsAuth] = useState(false);
+  const [isAuth, setIsAuth] = useState(null); // 🔥 change
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        await getMeAPI(); // cookie se check
+        await getMeAPI();
         setIsAuth(true);
       } catch {
         setIsAuth(false);
@@ -21,9 +21,11 @@ const ProtectedRoute = ({ children }) => {
     checkAuth();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading || isAuth === null) return <div>Loading...</div>;
 
-  return isAuth ? children : <Navigate to="/auth" replace />;
+  if (!isAuth) return <Navigate to="/auth" replace />;
+
+  return children;
 };
 
 export default ProtectedRoute;
