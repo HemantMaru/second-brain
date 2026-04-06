@@ -57,11 +57,14 @@ saveBtn.addEventListener("click", async () => {
         currentWindow: true,
       });
 
-      const response = await fetch("http://localhost:3000/api/item/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: tab.url, collection, note, tags: [] }),
-      });
+      const response = await fetch(
+        "https://frontend-khaki-nu-22.vercel.app/api/item/save",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: tab.url, collection, note, tags: [] }),
+        },
+      );
 
       if (!response.ok) throw new Error("Vault link failed");
       handleSuccess();
@@ -80,8 +83,8 @@ saveBtn.addEventListener("click", async () => {
       // Routing based on type
       let endpoint =
         file.type === "application/pdf"
-          ? "http://localhost:3000/api/item/save-pdf"
-          : "http://localhost:3000/api/item/save-image";
+          ? "https://frontend-khaki-nu-22.vercel.app/api/item/save-pdf"
+          : "https://frontend-khaki-nu-22.vercel.app/api/item/save-image";
 
       // 🔥 IMPORTANT: FormData ke liye manual headers mat dena!
       const response = await fetch(endpoint, {

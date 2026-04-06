@@ -7,7 +7,7 @@
     "default_popup": "popup.html"
   },
   "host_permissions": [
-    "http://localhost:3000/*",
+    "https://frontend-khaki-nu-22.vercel.app/*",
 
     "https://*.youtube.com/*",
     "https://*.instagram.com/*",
