@@ -1,29 +1,29 @@
-// AuthContext.jsx or ProtectedRoute.jsx
+import { Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { getMeAPI } from "../services/auth.api";
+
 const ProtectedRoute = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // Default loading true rakho
+  const [loading, setLoading] = useState(true);
+  const [isAuth, setIsAuth] = useState(null);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const timer = setTimeout(async () => {
       try {
-        const res = await axios.get("/api/auth/me");
-        setUser(res.data.user);
-      } catch (err) {
-        setUser(null);
+        await getMeAPI();
+        setIsAuth(true);
+      } catch {
+        setIsAuth(false);
       } finally {
-        setLoading(false); // API call khatam hone ke baad hi loading false karein
+        setLoading(false);
       }
-    };
-    checkAuth();
+    }, 300); // 🔥 delay fix
+
+    return () => clearTimeout(timer);
   }, []);
 
-  if (loading) {
-    return <div>Loading...</div>; // Ya koi badhiya Spinner
-  }
+  if (loading || isAuth === null) return <div>Loading...</div>;
 
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  return children;
+  return isAuth ? children : <Navigate to="/auth" replace />;
 };
+
+export default ProtectedRoute;
