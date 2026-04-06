@@ -716,6 +716,8 @@ const Items = () => {
                   label="Analytics"
                   path="/analytics"
                 />
+                <SidebarItem icon={Activity} label="Create Node" path="/" />
+
                 <div className="h-px bg-white/5 mx-2 my-4" />
                 <SidebarItem icon={Settings} label="Core Settings" />
               </nav>
