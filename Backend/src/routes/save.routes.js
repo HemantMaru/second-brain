@@ -26,29 +26,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // ================= MULTER =================
+const storage = multer.memoryStorage();
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
-
-const storage2 = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, "../../public/uploads"));
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  },
-});
-
-const upload = multer({ storage });
-
-const upload2 = multer({
-  storage: storage2,
+const upload = multer({
+  storage: storage,
   fileFilter: (req, file, cb) => {
     const types = [
       "application/pdf",
@@ -60,11 +41,10 @@ const upload2 = multer({
     if (types.includes(file.mimetype)) cb(null, true);
     else cb(new Error("File type not supported!"), false);
   },
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
 });
 
 const saveRoutes = Router();
-
 // ================= 🔐 PROTECTED ROUTES =================
 
 saveRoutes.post("/save", protect, saveItem);
@@ -88,7 +68,7 @@ saveRoutes.post("/save-youtube", protect, saveYoutubeItem);
 
 // 📁 FILE UPLOADS
 saveRoutes.post("/save-pdf", protect, upload.single("file"), savePdfItem);
-saveRoutes.post("/save-image", protect, upload2.single("file"), saveImageItem);
+saveRoutes.post("/save-image", protect, upload.single("file"), saveImageItem); // Dono mein 'upload' use karo
 
 // 🌍 PUBLIC ROUTE
 saveRoutes.get("/share/:id", getSharedItem);

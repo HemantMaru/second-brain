@@ -12,6 +12,14 @@ import dotenv from "dotenv";
 // Models & Libraries
 import saveModel from "../models/save.model.js";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
+
+import ImageKit from "imagekit";
+
+const imagekit = new ImageKit({
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
+});
 const getSmartThumbnail = (url) => {
   return `https://api.microlink.io/?url=${encodeURIComponent(
     url,
@@ -409,9 +417,16 @@ export const savePdfItem = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No PDF found" });
 
-    const fileBuffer = fs.readFileSync(req.file.path);
+    // 1. ImageKit par file bhejo
+    const ikResponse = await imagekit.upload({
+      file: req.file.buffer, // RAM se buffer uthaya
+      fileName: req.file.originalname,
+      folder: "/neurovault/pdfs",
+    });
+
+    // 2. PDF se text extract karo (Buffer use karke)
     const loadingTask = pdfjsLib.getDocument({
-      data: new Uint8Array(fileBuffer),
+      data: new Uint8Array(req.file.buffer),
     });
     const pdf = await loadingTask.promise;
 
@@ -422,10 +437,11 @@ export const savePdfItem = async (req, res) => {
       extractedText += content.items.map((item) => item.str).join(" ") + "\n";
     }
 
+    // 3. Database mein save karo
     const item = new saveModel({
       title: req.file.originalname.replace(".pdf", ""),
-      url: `http://localhost:3000/uploads/${req.file.filename}`,
-      thumbnail: "/pdf-icon.png", // simple icon
+      url: ikResponse.url, // 🔥 ImageKit ka live URL
+      thumbnail: "/pdf-icon.png",
       type: "pdf",
       tags: ["pdf", "archives"],
       collection: req.body.collection || "Archives",
@@ -437,6 +453,7 @@ export const savePdfItem = async (req, res) => {
     await item.save();
     res.status(201).json({ message: "PDF Ingested", data: item });
   } catch (error) {
+    console.error("PDF ERROR:", error);
     res.status(500).json({ message: "PDF sync failed" });
   }
 };
@@ -446,12 +463,20 @@ export const saveImageItem = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "Image required" });
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    // 1. ImageKit upload
+    const ikResponse = await imagekit.upload({
+      file: req.file.buffer,
+      fileName: req.file.originalname,
+      folder: "/neurovault/images",
+    });
+
+    // 2. Gemini AI Analysis
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     const prompt =
       "Describe this image for a search database in one paragraph.";
     const imagePart = {
       inlineData: {
-        data: Buffer.from(fs.readFileSync(req.file.path)).toString("base64"),
+        data: req.file.buffer.toString("base64"),
         mimeType: req.file.mimetype,
       },
     };
@@ -459,12 +484,13 @@ export const saveImageItem = async (req, res) => {
     const result = await model.generateContent([prompt, imagePart]);
     const summary = result.response.text();
 
+    // 3. Database mein save karo
     const item = new saveModel({
       title: req.file.originalname,
-      url: `http://localhost:3000/uploads/${req.file.filename}`,
-      thumbnail: `http://localhost:3000/uploads/${req.file.filename}`,
+      url: ikResponse.url, // 🔥 ImageKit ka live URL
+      thumbnail: ikResponse.url,
       type: "image",
-      tags: ["image", "visual"],
+      tags: req.body.tags || ["image"],
       collection: req.body.collection || "Gallery",
       note: summary,
       shareId: nanoid(8),
@@ -474,6 +500,7 @@ export const saveImageItem = async (req, res) => {
     await item.save();
     res.status(201).json({ message: "Vision Analyzed", data: item });
   } catch (error) {
+    console.error("IMAGE ERROR:", error);
     res.status(500).json({ message: "Vision sync failed" });
   }
 };

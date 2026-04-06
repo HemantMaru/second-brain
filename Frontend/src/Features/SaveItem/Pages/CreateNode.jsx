@@ -107,14 +107,19 @@ const CreateNode = () => {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("collection", collection);
-        formData.append("tags", tags);
+        // Tags ko array mein convert karke bhejna better hai
+        const tagArray = tags ? tags.split(",").map((t) => t.trim()) : [];
+        tagArray.forEach((tag) => formData.append("tags[]", tag));
+
         await uploadPdfAPI(formData);
       } else if (mode === "image") {
         if (!imageFile) throw new Error("Please select an image file");
         const formData = new FormData();
         formData.append("file", imageFile);
         formData.append("collection", collection);
-        formData.append("tags", tags);
+        const tagArray = tags ? tags.split(",").map((t) => t.trim()) : [];
+        tagArray.forEach((tag) => formData.append("tags[]", tag));
+
         await uploadImageAPI(formData);
       }
 
