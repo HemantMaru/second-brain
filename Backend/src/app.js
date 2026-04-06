@@ -21,8 +21,7 @@ import cookieParser from "cookie-parser"; // 👈 Ye line missing hai
 const app = express();
 app.use(
   cors({
-    origin:
-      "https://frontend-pz3b1ci56-hemantkumawat399-5351s-projects.vercel.app",
+    origin: "https://second-brain-gules-nu.vercel.app/",
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
