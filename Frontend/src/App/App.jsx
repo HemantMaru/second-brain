@@ -6,26 +6,31 @@ import AIAssistant from "../Features/SaveItem/Pages/AIAssistant";
 import { useDispatch } from "react-redux";
 import { authSuccess, logout } from "../Features/SaveItem/auth.slices";
 import { getMeAPI } from "../Features/SaveItem/services/auth.api";
+import { useState } from "react";
 
 const App = () => {
   const dispatch = useDispatch();
   useEffect(() => {
     console.log("HASH:", window.location.hash);
   }, []);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const data = await getMeAPI(); // 🔥 cookie se check
+        const data = await getMeAPI();
         dispatch(authSuccess({ user: data.user }));
-      } catch (err) {
+      } catch {
         dispatch(logout());
+      } finally {
+        setLoading(false);
       }
     };
 
     checkAuth();
   }, [dispatch]);
 
+  if (loading) return <div>Loading...</div>;
   return (
     <>
       <RouterProvider router={routes} />
