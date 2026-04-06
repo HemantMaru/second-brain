@@ -35,10 +35,6 @@ export const routes = createHashRouter([
   },
   {
     path: "/",
-    element: (
-      <ProtectedRoute>
-        <CreateNode />
-      </ProtectedRoute>
-    ),
+    element: <CreateNode />,
   },
 ]);
