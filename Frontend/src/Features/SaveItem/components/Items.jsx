@@ -73,11 +73,27 @@ import Flashcard from "../components/Flashcard";
 // --- 🛰️ COMPONENT: NODE CARD (OPTIMIZED) ---
 // ===========================================================================
 const NodeCard = memo(
-  ({ item, onFocus, onPin, onShare, getThumb, classify, contentIcon, autoTags }) => {
+  ({
+    item,
+    onFocus,
+    onPin,
+    onShare,
+    getThumb,
+    classify,
+    contentIcon,
+    autoTags,
+  }) => {
     const [imgLoaded, setImgLoaded] = useState(false);
     const type = classify(item.url);
     const thumb = getThumb(item);
 
+    // ✅ TASK 6: MERGE BACKEND TAGS + AI TAGS + PLATFORM TAGS
+    const allTags = useMemo(() => {
+      const merged = [...new Set([...(item.tags || []), ...(autoTags || [])])];
+      return merged.slice(0, 4);
+    }, [item.tags, autoTags]);
+
+    // LinkedIn, Twitter, FB, Insta Check for Microlink Fallback
     const isSocial =
       item.url?.includes("linkedin.com") ||
       item.url?.includes("twitter.com") ||
@@ -85,10 +101,13 @@ const NodeCard = memo(
       item.url?.includes("facebook.com") ||
       item.url?.includes("instagram.com");
 
-    // 🔥 Fix 2: Agar type 'Images' ya 'Docs' hai, toh Microlink nahi, 'thumb' use karo
-    const finalThumb = (isSocial && type !== 'Images' && type !== 'Docs')
-      ? `https://api.microlink.io/?url=${encodeURIComponent(item.url)}&screenshot=true&meta=false&embed=screenshot.url`
+    const finalThumb = isSocial
+      ? `https://api.microlink.io/?url=${encodeURIComponent(
+          item.url,
+        )}&screenshot=true&meta=false&embed=screenshot.url`
       : thumb;
+
+    return (
       <motion.article
         layout
         initial={{ opacity: 0, y: 20 }}
@@ -359,35 +378,40 @@ const Items = () => {
   }, []);
 
   // ✅ TASK 5: IMPROVED SOCIAL PREVIEW LOGIC
-  // Items.js mein is function ko dhoondo aur poora replace kar do
   const getSmartThumbnail = useCallback((item) => {
-    if (!item)
+    if (!item || !item.url)
       return "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800";
 
-    // 🔥 Fix 1: Agar backend ne thumbnail diya hai (ImageKit URL ya PDF Icon), toh wahi use karo
-    if (
-      item.thumbnail &&
-      (item.thumbnail.startsWith("http") || item.thumbnail.startsWith("https"))
-    ) {
-      return item.thumbnail;
-    }
-
-    const url = item.url || "";
+    const url = item.url;
     const lowUrl = url.toLowerCase();
 
-    // YouTube Fallback logic
+    // YouTube Handling
     if (lowUrl.includes("youtube.com") || lowUrl.includes("youtu.be")) {
       const vId = lowUrl.includes("youtu.be")
         ? url.split("youtu.be/")[1]?.split("?")[0]
         : new URL(url).searchParams.get("v");
       return vId
         ? `https://img.youtube.com/vi/${vId}/hqdefault.jpg`
-        : "https://images.unsplash.com/photo-1508780709619-79562169bc64?q=80&w=800";
+        : "[https://images.unsplash.com/photo-1508780709619-79562169bc64?q=80&w=800](https://images.unsplash.com/photo-1508780709619-79562169bc64?q=80&w=800)";
     }
 
-    // Baki sab ke liye Microlink (Screenshot)
+    // Direct Image Link
+    if (lowUrl.match(/\.(jpeg|jpg|png|webp|avif)$/)) return url;
+
+    // Social Media Fallbacks (Microlink)
+    if (
+      lowUrl.includes("linkedin.com") ||
+      lowUrl.includes("twitter.com") ||
+      lowUrl.includes("x.com") ||
+      lowUrl.includes("facebook.com") ||
+      lowUrl.includes("instagram.com")
+    ) {
+      return `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&embed=screenshot.url`;
+    }
+
     return `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&embed=screenshot.url`;
   }, []);
+
   const resolveAssetProtocol = useCallback((url) => {
     if (!url) return "";
     return url.startsWith("http")
@@ -513,16 +537,33 @@ const Items = () => {
   }, [saveItems]);
 
   // ✅ TASK 1: CRITICAL RESURFACING SYSTEM FIX
-  // memoryFlashes wala useMemo block replace karo
-const memoryFlashes = useMemo(() => {
-  if (!saveItems || saveItems.length === 0) return [];
+  const memoryFlashes = useMemo(() => {
+    if (!saveItems || saveItems.length === 0) return [];
 
-  // Sabse pehle items ko shuffle (randomize) karo
-  let shuffled = [...saveItems].sort(() => 0.5 - Math.random());
+    const now = Date.now();
+    const twoDaysInMs = 172800000;
 
-  // Top 3 uthao. Agar data kam hai toh jitna hai utna dikhao.
-  return shuffled.slice(0, 3);
-}, [saveItems]);
+    // 1. Items older than 2 days
+    let oldItems = saveItems.filter((i) => {
+      const created = i.createdAt ? new Date(i.createdAt).getTime() : 0;
+      return now - created > twoDaysInMs;
+    });
+
+    // 2. Mix: Shuffle old items
+    let mixed = oldItems.sort(() => 0.5 - Math.random());
+
+    // 3. Fill logic: If less than 3, add recent items or random
+    if (mixed.length < 3) {
+      const others = saveItems
+        .filter((i) => !mixed.find((m) => m._id === i._id))
+        .sort(() => 0.5 - Math.random());
+      mixed = [...mixed, ...others].slice(0, 3);
+    } else {
+      mixed = mixed.slice(0, 3);
+    }
+
+    return mixed;
+  }, [saveItems]);
 
   const discoverRelativity = useCallback(async (id) => {
     try {
