@@ -21,7 +21,10 @@ import cookieParser from "cookie-parser"; // 👈 Ye line missing hai
 const app = express();
 app.use(
   cors({
-    origin: "https://second-brain-gules-nu.vercel.app/",
+    origin: [
+      "http://localhost:5173",
+      "https://second-brain-gules-nu.vercel.app",
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
