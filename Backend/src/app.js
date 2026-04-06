@@ -24,6 +24,7 @@ app.use(
     origin: [
       "http://localhost:5173",
       "https://second-brain-gules-nu.vercel.app",
+      "https://second-brain-dcrlqulx1-hemantkumawat399-5351s-projects.vercel.app",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
