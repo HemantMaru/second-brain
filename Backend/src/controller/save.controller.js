@@ -441,7 +441,7 @@ export const savePdfItem = async (req, res) => {
     const item = new saveModel({
       title: req.file.originalname.replace(".pdf", ""),
       url: ikResponse.url, // 🔥 ImageKit ka live URL
-      thumbnail: "https://cdn-icons-png.flaticon.com/512/337/337946.png",
+      thumbnail: "/pdf-icon.png",
       type: "pdf",
       tags: ["pdf", "archives"],
       collection: req.body.collection || "Archives",
@@ -490,7 +490,7 @@ export const saveImageItem = async (req, res) => {
       url: ikResponse.url, // 🔥 ImageKit ka live URL
       thumbnail: ikResponse.url,
       type: "image",
-      tags: req.body.tags || ["image"],
+      tags: ["image", "visual"],
       collection: req.body.collection || "Gallery",
       note: summary,
       shareId: nanoid(8),
