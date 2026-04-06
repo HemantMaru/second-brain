@@ -72,7 +72,6 @@ import Flashcard from "../components/Flashcard";
 // ===========================================================================
 // --- 🛰️ COMPONENT: NODE CARD (OPTIMIZED) ---
 // ===========================================================================
-// NodeCard ko isse replace kar do
 const NodeCard = memo(
   ({
     item,
@@ -86,14 +85,27 @@ const NodeCard = memo(
   }) => {
     const [imgLoaded, setImgLoaded] = useState(false);
     const type = classify(item.url);
+    const thumb = getThumb(item);
 
-    // 🔥 Sabse bada fix: Faltu isSocial logic hata kar direct thumb use karo
-    const finalThumb = getThumb(item);
-
+    // ✅ TASK 6: MERGE BACKEND TAGS + AI TAGS + PLATFORM TAGS
     const allTags = useMemo(() => {
       const merged = [...new Set([...(item.tags || []), ...(autoTags || [])])];
       return merged.slice(0, 4);
     }, [item.tags, autoTags]);
+
+    // LinkedIn, Twitter, FB, Insta Check for Microlink Fallback
+    const isSocial =
+      item.url?.includes("linkedin.com") ||
+      item.url?.includes("twitter.com") ||
+      item.url?.includes("x.com") ||
+      item.url?.includes("facebook.com") ||
+      item.url?.includes("instagram.com");
+
+    const finalThumb = isSocial
+      ? `https://api.microlink.io/?url=${encodeURIComponent(
+          item.url,
+        )}&screenshot=true&meta=false&embed=screenshot.url`
+      : thumb;
 
     return (
       <motion.article
@@ -101,10 +113,11 @@ const NodeCard = memo(
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        whileHover={{ scale: 1.02 }}
-        className="group relative bg-[#09090b]/60 backdrop-blur-md border border-white/5 rounded-[2.5rem] overflow-hidden flex flex-col min-h-[480px] lg:min-h-[520px] shadow-2xl transition-all hover:border-indigo-500/40 cursor-pointer w-full"
+        whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+        className="group relative bg-[#09090b]/60 backdrop-blur-md border border-white/5 rounded-[2.5rem] overflow-hidden flex flex-col min-h-[480px] lg:min-h-[520px] shadow-2xl transition-all hover:border-indigo-500/40 cursor-pointer will-change-transform w-full"
         onClick={onFocus}
       >
+        {/* ✅ TASK 4: FIX CARD IMAGE HEIGHT (h-[280px] lg:h-[320px]) */}
         <div className="relative w-full h-[280px] lg:h-[320px] overflow-hidden bg-zinc-900 border-b border-white/5 shrink-0">
           {!imgLoaded && (
             <div className="absolute inset-0 animate-pulse bg-white/5 flex items-center justify-center">
@@ -113,7 +126,10 @@ const NodeCard = memo(
           )}
 
           <img
-            src={finalThumb}
+            src={
+              finalThumb ||
+              "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800"
+            }
             onLoad={() => setImgLoaded(true)}
             className={`w-full h-full object-cover transition-all duration-500 ${
               imgLoaded
@@ -122,31 +138,96 @@ const NodeCard = memo(
             }`}
             alt={item.title || "preview"}
             onError={(e) => {
-              // Agar koi link expire ho jaye (like Instagram), toh Microlink screenshot fallback
-              if (!e.target.src.includes("microlink.io")) {
-                e.target.src = `https://api.microlink.io/?url=${encodeURIComponent(item.url)}&screenshot=true&meta=false&embed=screenshot.url`;
-              }
+              e.target.onerror = null;
+              e.target.src = `https://api.microlink.io/?url=${encodeURIComponent(
+                item.url,
+              )}&screenshot=true&meta=false&embed=screenshot.url`;
             }}
           />
-          {/* ... baki ke icons aur overlays same rehne do ... */}
-          <div className="absolute top-6 left-6 flex items-center gap-3 bg-black/80 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10 z-10">
+
+          {type === "Videos" && (
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <PlayCircle className="text-white fill-indigo-600/20" size={48} />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
+          <div className="absolute top-6 left-6 flex items-center gap-3 bg-black/80 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10 shadow-2xl z-10">
             {contentIcon}
             <span className="text-[9px] font-black uppercase tracking-widest">
               {type}
             </span>
           </div>
         </div>
-        {/* ... Card Content niche wala same ... */}
+
+        {/* Content Area */}
         <div className="p-8 flex flex-col flex-grow justify-between relative z-10">
-          <h3 className="text-sm lg:text-base font-black text-slate-100 line-clamp-2 uppercase italic">
-            {item.title}
-          </h3>
-          {/* Tags and footer as per your original code */}
+          <div className="space-y-4">
+            <h3 className="text-sm lg:text-base font-black text-slate-100 leading-snug line-clamp-2 uppercase tracking-tight group-hover:text-indigo-400 transition-colors italic">
+              {item.title || "Untitled Intelligence"}
+            </h3>
+
+            {/* ✅ TASK 6: RESPONSIVE TAG SYSTEM */}
+            {allTags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {allTags.map((tag, idx) => (
+                  <motion.span
+                    key={`${tag}-${idx}`}
+                    whileHover={{
+                      scale: 1.05,
+                      backgroundColor: "rgba(99, 102, 241, 0.2)",
+                      boxShadow: "0 0 10px rgba(99, 102, 241, 0.3)",
+                    }}
+                    className="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[8px] font-black uppercase tracking-wider whitespace-nowrap transition-all"
+                  >
+                    {tag}
+                  </motion.span>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 opacity-40 group-hover:opacity-100 transition-opacity pt-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest truncate">
+                {item.collection || "Omni_Vault"}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-6 border-t border-white/5 mt-auto">
+            <div className="flex gap-5">
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  await onPin();
+                }}
+                className={`transition-all hover:scale-125 active:scale-90 ${
+                  item.isPinned
+                    ? "text-orange-500"
+                    : "text-slate-700 hover:text-white"
+                }`}
+              >
+                <Pin size={18} fill={item.isPinned ? "currentColor" : "none"} />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onShare();
+                }}
+                className="text-slate-700 hover:text-white hover:scale-125 active:scale-90 transition-all"
+              >
+                <Share2 size={18} />
+              </button>
+            </div>
+            <span className="text-[9px] font-black text-slate-800 tracking-widest italic uppercase">
+              0x{item._id?.slice(-4) || "NULL"}
+            </span>
+          </div>
         </div>
       </motion.article>
     );
   },
 );
+
 // ===========================================================================
 // --- 🛰️ MAIN COMPONENT ---
 // ===========================================================================
@@ -297,32 +378,40 @@ const Items = () => {
   }, []);
 
   // ✅ TASK 5: IMPROVED SOCIAL PREVIEW LOGIC
-  // Items component ke andar isse replace karo
   const getSmartThumbnail = useCallback((item) => {
-    if (!item)
+    if (!item || !item.url)
       return "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800";
 
-    // 1. Priority: Backend ne jo 'thumbnail' field di hai (Instagram, ImageKit, PDF Icon)
-    if (item.thumbnail && item.thumbnail.startsWith("http")) {
-      return item.thumbnail;
-    }
-
-    const url = item.url || "";
+    const url = item.url;
     const lowUrl = url.toLowerCase();
 
-    // 2. YouTube Fallback
+    // YouTube Handling
     if (lowUrl.includes("youtube.com") || lowUrl.includes("youtu.be")) {
       const vId = lowUrl.includes("youtu.be")
         ? url.split("youtu.be/")[1]?.split("?")[0]
         : new URL(url).searchParams.get("v");
       return vId
         ? `https://img.youtube.com/vi/${vId}/hqdefault.jpg`
-        : "https://images.unsplash.com/photo-1508780709619-79562169bc64?q=80&w=800";
+        : "[https://images.unsplash.com/photo-1508780709619-79562169bc64?q=80&w=800](https://images.unsplash.com/photo-1508780709619-79562169bc64?q=80&w=800)";
     }
 
-    // 3. Fallback: Screenshot
+    // Direct Image Link
+    if (lowUrl.match(/\.(jpeg|jpg|png|webp|avif)$/)) return url;
+
+    // Social Media Fallbacks (Microlink)
+    if (
+      lowUrl.includes("linkedin.com") ||
+      lowUrl.includes("twitter.com") ||
+      lowUrl.includes("x.com") ||
+      lowUrl.includes("facebook.com") ||
+      lowUrl.includes("instagram.com")
+    ) {
+      return `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&embed=screenshot.url`;
+    }
+
     return `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&embed=screenshot.url`;
   }, []);
+
   const resolveAssetProtocol = useCallback((url) => {
     if (!url) return "";
     return url.startsWith("http")
@@ -448,15 +537,32 @@ const Items = () => {
   }, [saveItems]);
 
   // ✅ TASK 1: CRITICAL RESURFACING SYSTEM FIX
-  // memoryFlashes wala useMemo replace karo
   const memoryFlashes = useMemo(() => {
     if (!saveItems || saveItems.length === 0) return [];
 
-    // Sabse pehle random shuffle karo
-    let shuffled = [...saveItems].sort(() => 0.5 - Math.random());
+    const now = Date.now();
+    const twoDaysInMs = 172800000;
 
-    // Top 3 items dikhao, chahe wo naye hon ya purane
-    return shuffled.slice(0, 3);
+    // 1. Items older than 2 days
+    let oldItems = saveItems.filter((i) => {
+      const created = i.createdAt ? new Date(i.createdAt).getTime() : 0;
+      return now - created > twoDaysInMs;
+    });
+
+    // 2. Mix: Shuffle old items
+    let mixed = oldItems.sort(() => 0.5 - Math.random());
+
+    // 3. Fill logic: If less than 3, add recent items or random
+    if (mixed.length < 3) {
+      const others = saveItems
+        .filter((i) => !mixed.find((m) => m._id === i._id))
+        .sort(() => 0.5 - Math.random());
+      mixed = [...mixed, ...others].slice(0, 3);
+    } else {
+      mixed = mixed.slice(0, 3);
+    }
+
+    return mixed;
   }, [saveItems]);
 
   const discoverRelativity = useCallback(async (id) => {
