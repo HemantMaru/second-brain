@@ -17,7 +17,7 @@ import express from "express";
 import saveRoutes from "./routes/save.routes.js";
 import router from "./routes/auth.routes.js";
 import cors from "cors";
-import cookieParser from "cookie-parser"; // 👈 Ye line missing hai
+import cookieParser from "cookie-parser"; //  Ye line missing hai
 const app = express();
 app.use(
   cors({
