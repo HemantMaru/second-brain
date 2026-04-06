@@ -20,7 +20,6 @@ export const routes = createHashRouter([
       </ProtectedRoute>
     ),
   },
-
   {
     path: "/graph",
     element: <Graph />,
@@ -33,8 +32,21 @@ export const routes = createHashRouter([
     path: "/analytics",
     element: <Analytics />,
   },
+
+  // 👇 IMPORTANT: "/" last me
   {
     path: "/",
-    element: <CreateNode />,
+    element: (
+      <ProtectedRoute>
+        <CreateNode />
+      </ProtectedRoute>
+    ),
   },
+
+  // 👇 fallback
+  {
+    path: "*",
+    element: <Navigate to="/" replace />,
+  },
+  console.log(window.location.hash),
 ]);
