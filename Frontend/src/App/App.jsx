@@ -30,7 +30,13 @@ const App = () => {
     checkAuth();
   }, [dispatch]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="loader-container">
+        <div className="spinner"></div>
+      </div>
+    );
+  }
   return (
     <>
       <RouterProvider router={routes} />
