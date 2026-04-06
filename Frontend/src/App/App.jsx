@@ -9,6 +9,9 @@ import { getMeAPI } from "../Features/SaveItem/services/auth.api";
 
 const App = () => {
   const dispatch = useDispatch();
+  useEffect(() => {
+    console.log("HASH:", window.location.hash);
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {

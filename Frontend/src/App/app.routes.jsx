@@ -7,6 +7,7 @@ import Share from "../Features/SaveItem/Pages/Share";
 import CreateNode from "../Features/SaveItem/Pages/CreateNode";
 import NeuroVaultAuth from "../Features/SaveItem/Pages/NeuroVaultAuth";
 import ProtectedRoute from "../Features/SaveItem/components/ProtectedRoute";
+
 export const routes = createHashRouter([
   {
     path: "/auth",
@@ -48,5 +49,4 @@ export const routes = createHashRouter([
     path: "*",
     element: <Navigate to="/" replace />,
   },
-  console.log(window.location.hash),
 ]);
