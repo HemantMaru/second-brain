@@ -11,10 +11,10 @@ import { useState } from "react";
 const App = () => {
   const dispatch = useDispatch();
   useEffect(() => {
-    console.log("HASH:", window.location.hash);
+    console.log("CURRENT PATH:", window.location.pathname);
   }, []);
   const [loading, setLoading] = useState(true);
-
+  console.log("APP LOADED");
   useEffect(() => {
     const checkAuth = async () => {
       try {
