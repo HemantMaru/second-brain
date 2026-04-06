@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import SaveItem from "../Features/SaveItem/Pages/SaveItem";
 import Graph from "../Features/SaveItem/Pages/Graph";
 import Collection from "../Features/SaveItem/Pages/Collection";
