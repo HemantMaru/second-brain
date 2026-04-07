@@ -121,7 +121,7 @@ const NodeCard = memo(
             onError={(e) => {
               e.target.onerror = null;
               // 🔥 BULLETPROOF FALLBACK IF MAIN THUMBNAIL FAILS
-              e.target.src = `https://api.microlink.io/?url=${encodeURIComponent(item.url)}&screenshot=true`;
+              e.target.src = `https://image.thum.io/get/width/800/crop/600/${item.url}`;
             }}
           />
 
@@ -356,35 +356,33 @@ const Items = () => {
   }, []);
 
   // 🔥 THUMBNAIL LOGIC
-  // 🔥 THUMBNAIL LOGIC (FIXED)
   const getSmartThumbnail = useCallback((item) => {
     if (!item || !item.url)
       return "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800";
 
-    // 1. Agar ImageKit ka URL hai (Uploads) ya PDF ka icon hai, toh wahi use karo
     if (
       item.thumbnail &&
-      (item.thumbnail.includes("ik.imagekit.io") ||
-        item.thumbnail.includes("wikimedia"))
+      item.thumbnail.startsWith("http") &&
+      !item.thumbnail.includes("microlink")
     ) {
       return item.thumbnail;
     }
 
-    const lowUrl = item.url.toLowerCase();
+    const url = item.url;
+    const lowUrl = url.toLowerCase();
 
-    // 2. YouTube
     if (lowUrl.includes("youtube.com") || lowUrl.includes("youtu.be")) {
       const vId = lowUrl.includes("youtu.be")
-        ? item.url.split("youtu.be/")[1]?.split("?")[0]
-        : new URL(item.url).searchParams.get("v");
+        ? url.split("youtu.be/")[1]?.split("?")[0]
+        : new URL(url).searchParams.get("v");
+
       return vId ? `https://img.youtube.com/vi/${vId}/hqdefault.jpg` : "";
     }
 
-    // 3. Direct Image Link
-    if (lowUrl.match(/\.(jpeg|jpg|png|webp|avif)$/)) return item.url;
+    if (lowUrl.match(/\.(jpeg|jpg|png|webp|avif)$/)) return url;
 
-    // 4. Microlink with CORRECT EMBED FLAG (Bahut important)
-    return `https://api.microlink.io/?url=${encodeURIComponent(item.url)}&screenshot=true&meta=false&embed=screenshot.url`;
+    // 🔥 FINAL FIX
+    return `https://image.thum.io/get/width/800/crop/600/${url}`;
   }, []);
   const resolveAssetProtocol = useCallback((url) => {
     if (!url) return "";
@@ -1123,7 +1121,7 @@ const NodeExpansionModal = ({
             onError={(e) => {
               e.target.onerror = null;
               // 🔥 FALLBACK FIX IN MODAL TOO
-              e.target.src = `https://api.microlink.io/?url=${encodeURIComponent(node.url)}&screenshot=true`;
+              e.target.src = `https://image.thum.io/get/width/800/crop/600/${node.url}`;
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0e] via-transparent to-transparent" />
