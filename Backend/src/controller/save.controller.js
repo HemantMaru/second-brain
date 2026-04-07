@@ -425,7 +425,7 @@ export const savePdfItem = async (req, res) => {
       title: req.file.originalname.replace(".pdf", ""),
       url: ikResponse.url,
       thumbnail:
-        "https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg", // Strict PDF Icon
+        "https://plus.unsplash.com/premium_photo-1731951687922-1bb9d7722a49?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // Strict PDF Icon
       type: "pdf",
       tags: ["pdf", "archives"],
       collection: req.body.collection || "Archives",
