@@ -136,31 +136,13 @@ export const saveItem = async (req, res) => {
 
     // 🔥 FORCE FIXES
 
-    let thumbnail =
-      $("meta[property='og:image']").attr("content") ||
-      $("meta[name='twitter:image']").attr("content");
+    let thumbnail = "";
 
-    // 🔥 UNIVERSAL FALLBACK
-    if (!thumbnail || thumbnail.includes("logo") || thumbnail.length < 10) {
-      thumbnail = `https://api.microlink.io/?url=${encodeURIComponent(
-        url,
-      )}&screenshot=true&meta=false&embed=screenshot.url`;
-    }
+    // 🔥 ALWAYS USE MICROLINK (NO SCRAPING TRUST)
+    thumbnail = `https://api.microlink.io/?url=${encodeURIComponent(
+      url,
+    )}&screenshot=true&meta=false`;
     // 🔥 STRICT RULES (IMPORTANT)
-    if (url.includes("youtube")) {
-      // YouTube already handled separately
-    } else if (url.includes("instagram.com")) {
-      thumbnail = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true`;
-    } else if (url.includes("twitter.com") || url.includes("x.com")) {
-      thumbnail = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true`;
-    } else if (url.includes("linkedin.com")) {
-      thumbnail = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true`;
-    } else {
-      // fallback for normal websites
-      if (!thumbnail) {
-        thumbnail = getSmartThumbnail(url);
-      }
-    }
 
     // 🔥 FINAL FIX: LinkedIn ke liye custom image force karo
 
