@@ -424,7 +424,8 @@ export const savePdfItem = async (req, res) => {
     const item = new saveModel({
       title: req.file.originalname.replace(".pdf", ""),
       url: ikResponse.url,
-      thumbnail: "https://cdn-icons-png.flaticon.com/512/337/337946.png", // Strict PDF Icon
+      thumbnail:
+        "https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg", // Strict PDF Icon
       type: "pdf",
       tags: ["pdf", "archives"],
       collection: req.body.collection || "Archives",

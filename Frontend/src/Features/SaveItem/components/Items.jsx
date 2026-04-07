@@ -119,9 +119,37 @@ const NodeCard = memo(
             }`}
             alt={item.title || "preview"}
             onError={(e) => {
-              e.target.onerror = null;
-              // 🔥 BULLETPROOF FALLBACK IF MAIN THUMBNAIL FAILS
-              e.target.src = `https://api.microlink.io/?url=${encodeURIComponent(item.url)}&screenshot=true`;
+              e.target.onerror = null; // Infinite loop rokne ke liye
+              const fallbackUrl = (item.url || "").toLowerCase();
+
+              // 🔥 BULLETPROOF LOGO FALLBACKS FOR SOCIAL MEDIA
+              if (fallbackUrl.includes("linkedin.com")) {
+                e.target.src =
+                  "https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png";
+                e.target.style.objectFit = "contain";
+                e.target.style.padding = "2rem";
+              } else if (
+                fallbackUrl.includes("twitter.com") ||
+                fallbackUrl.includes("x.com")
+              ) {
+                e.target.src =
+                  "https://upload.wikimedia.org/wikipedia/commons/c/ce/X_logo_2023.svg";
+                e.target.style.objectFit = "contain";
+                e.target.style.padding = "2rem";
+              } else if (fallbackUrl.includes("instagram.com")) {
+                e.target.src =
+                  "https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png";
+                e.target.style.objectFit = "contain";
+                e.target.style.padding = "2rem";
+              } else if (fallbackUrl.includes("facebook.com")) {
+                e.target.src =
+                  "https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg";
+                e.target.style.objectFit = "contain";
+                e.target.style.padding = "2rem";
+              } else {
+                e.target.src =
+                  "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800";
+              }
             }}
           />
 
@@ -356,33 +384,35 @@ const Items = () => {
   }, []);
 
   // 🔥 THUMBNAIL LOGIC
+  // 🔥 THUMBNAIL LOGIC (FIXED)
   const getSmartThumbnail = useCallback((item) => {
     if (!item || !item.url)
       return "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800";
 
+    // 1. Agar ImageKit ka URL hai (Uploads) ya PDF ka icon hai, toh wahi use karo
     if (
       item.thumbnail &&
-      item.thumbnail.startsWith("http") &&
-      !item.thumbnail.includes("microlink")
+      (item.thumbnail.includes("ik.imagekit.io") ||
+        item.thumbnail.includes("wikimedia"))
     ) {
       return item.thumbnail;
     }
 
-    const url = item.url;
-    const lowUrl = url.toLowerCase();
+    const lowUrl = item.url.toLowerCase();
 
+    // 2. YouTube
     if (lowUrl.includes("youtube.com") || lowUrl.includes("youtu.be")) {
       const vId = lowUrl.includes("youtu.be")
-        ? url.split("youtu.be/")[1]?.split("?")[0]
-        : new URL(url).searchParams.get("v");
-
+        ? item.url.split("youtu.be/")[1]?.split("?")[0]
+        : new URL(item.url).searchParams.get("v");
       return vId ? `https://img.youtube.com/vi/${vId}/hqdefault.jpg` : "";
     }
 
-    if (lowUrl.match(/\.(jpeg|jpg|png|webp|avif)$/)) return url;
+    // 3. Direct Image Link
+    if (lowUrl.match(/\.(jpeg|jpg|png|webp|avif)$/)) return item.url;
 
-    // 🔥 FINAL FIX
-    return `https://image.thum.io/get/width/800/crop/600/${url}`;
+    // 4. Microlink with CORRECT EMBED FLAG (Bahut important)
+    return `https://api.microlink.io/?url=${encodeURIComponent(item.url)}&screenshot=true&meta=false&embed=screenshot.url`;
   }, []);
   const resolveAssetProtocol = useCallback((url) => {
     if (!url) return "";
@@ -1120,8 +1150,35 @@ const NodeExpansionModal = ({
             alt={node.title || "Focus"}
             onError={(e) => {
               e.target.onerror = null;
-              // 🔥 FALLBACK FIX IN MODAL TOO
-              e.target.src = `https://api.microlink.io/?url=${encodeURIComponent(node.url)}&screenshot=true`;
+              const fallbackUrl = (node.url || "").toLowerCase();
+
+              if (fallbackUrl.includes("linkedin.com")) {
+                e.target.src =
+                  "https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png";
+                e.target.style.objectFit = "contain";
+                e.target.style.padding = "2rem";
+              } else if (
+                fallbackUrl.includes("twitter.com") ||
+                fallbackUrl.includes("x.com")
+              ) {
+                e.target.src =
+                  "https://upload.wikimedia.org/wikipedia/commons/c/ce/X_logo_2023.svg";
+                e.target.style.objectFit = "contain";
+                e.target.style.padding = "2rem";
+              } else if (fallbackUrl.includes("instagram.com")) {
+                e.target.src =
+                  "https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png";
+                e.target.style.objectFit = "contain";
+                e.target.style.padding = "2rem";
+              } else if (fallbackUrl.includes("facebook.com")) {
+                e.target.src =
+                  "https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg";
+                e.target.style.objectFit = "contain";
+                e.target.style.padding = "2rem";
+              } else {
+                e.target.src =
+                  "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800";
+              }
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0e] via-transparent to-transparent" />
