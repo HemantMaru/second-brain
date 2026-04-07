@@ -87,25 +87,10 @@ const NodeCard = memo(
     const type = classify(item.url);
     const thumb = getThumb(item);
 
-    // ✅ TASK 6: MERGE BACKEND TAGS + AI TAGS + PLATFORM TAGS
     const allTags = useMemo(() => {
       const merged = [...new Set([...(item.tags || []), ...(autoTags || [])])];
       return merged.slice(0, 4);
     }, [item.tags, autoTags]);
-
-    // LinkedIn, Twitter, FB, Insta Check for Microlink Fallback
-    const isSocial =
-      item.url?.includes("linkedin.com") ||
-      item.url?.includes("twitter.com") ||
-      item.url?.includes("x.com") ||
-      item.url?.includes("facebook.com") ||
-      item.url?.includes("instagram.com");
-
-    const finalThumb = isSocial
-      ? `https://api.microlink.io/?url=${encodeURIComponent(
-          item.url,
-        )}&screenshot=true&meta=false&embed=screenshot.url`
-      : thumb;
 
     return (
       <motion.article
@@ -117,7 +102,6 @@ const NodeCard = memo(
         className="group relative bg-[#09090b]/60 backdrop-blur-md border border-white/5 rounded-[2.5rem] overflow-hidden flex flex-col min-h-[480px] lg:min-h-[520px] shadow-2xl transition-all hover:border-indigo-500/40 cursor-pointer will-change-transform w-full"
         onClick={onFocus}
       >
-        {/* ✅ TASK 4: FIX CARD IMAGE HEIGHT (h-[280px] lg:h-[320px]) */}
         <div className="relative w-full h-[280px] lg:h-[320px] overflow-hidden bg-zinc-900 border-b border-white/5 shrink-0">
           {!imgLoaded && (
             <div className="absolute inset-0 animate-pulse bg-white/5 flex items-center justify-center">
@@ -126,7 +110,7 @@ const NodeCard = memo(
           )}
 
           <img
-            src={finalThumb}
+            src={thumb}
             onLoad={() => setImgLoaded(true)}
             className={`w-full h-full object-cover transition-all duration-500 ${
               imgLoaded
@@ -136,9 +120,10 @@ const NodeCard = memo(
             alt={item.title || "preview"}
             onError={(e) => {
               e.target.onerror = null;
+              // 🔥 BULLETPROOF FALLBACK IF MAIN THUMBNAIL FAILS
               e.target.src = `https://api.microlink.io/?url=${encodeURIComponent(
                 item.url,
-              )}&screenshot=true`;
+              )}&screenshot=true&meta=false&embed=screenshot.url`;
             }}
           />
 
@@ -163,7 +148,6 @@ const NodeCard = memo(
               {item.title || "Untitled Intelligence"}
             </h3>
 
-            {/* ✅ TASK 6: RESPONSIVE TAG SYSTEM */}
             {allTags.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {allTags.map((tag, idx) => (
@@ -291,7 +275,6 @@ const Items = () => {
     email: "admin@neurovault.io",
   };
 
-  // ✅ TASK 6: AUTO TAGS INJECTION (OPTIMIZED)
   const getAutoTags = useCallback((item) => {
     if (!item) return [];
     const url = item.url?.toLowerCase() || "";
@@ -369,42 +352,31 @@ const Items = () => {
     const str = url.toLowerCase();
     if (str.includes("youtube.com") || str.includes("youtu.be"))
       return "Videos";
-    if (str.match(/.(jpeg|jpg|gif|png|webp|avif)$/)) return "Images";
+    if (str.match(/\.(jpeg|jpg|gif|png|webp|avif)$/)) return "Images";
     if (str.includes(".pdf")) return "Docs";
     return "Web";
   }, []);
 
-  // ✅ TASK 5: IMPROVED SOCIAL PREVIEW LOGIC
+  // 🔥 THUMBNAIL LOGIC
   const getSmartThumbnail = useCallback((item) => {
     if (!item || !item.url)
       return "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800";
 
+    if (item.thumbnail && item.thumbnail !== "") return item.thumbnail;
+
     const url = item.url;
     const lowUrl = url.toLowerCase();
 
-    // YouTube Handling
     if (lowUrl.includes("youtube.com") || lowUrl.includes("youtu.be")) {
       const vId = lowUrl.includes("youtu.be")
         ? url.split("youtu.be/")[1]?.split("?")[0]
         : new URL(url).searchParams.get("v");
       return vId
         ? `https://img.youtube.com/vi/${vId}/hqdefault.jpg`
-        : "[https://images.unsplash.com/photo-1508780709619-79562169bc64?q=80&w=800](https://images.unsplash.com/photo-1508780709619-79562169bc64?q=80&w=800)";
+        : "https://images.unsplash.com/photo-1508780709619-79562169bc64?q=80&w=800";
     }
 
-    // Direct Image Link
     if (lowUrl.match(/\.(jpeg|jpg|png|webp|avif)$/)) return url;
-
-    // Social Media Fallbacks (Microlink)
-    if (
-      lowUrl.includes("linkedin.com") ||
-      lowUrl.includes("twitter.com") ||
-      lowUrl.includes("x.com") ||
-      lowUrl.includes("facebook.com") ||
-      lowUrl.includes("instagram.com")
-    ) {
-      return `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&embed=screenshot.url`;
-    }
 
     return `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&embed=screenshot.url`;
   }, []);
@@ -533,23 +505,19 @@ const Items = () => {
     return [...catSet];
   }, [saveItems]);
 
-  // ✅ TASK 1: CRITICAL RESURFACING SYSTEM FIX
   const memoryFlashes = useMemo(() => {
     if (!saveItems || saveItems.length === 0) return [];
 
     const now = Date.now();
     const twoDaysInMs = 172800000;
 
-    // 1. Items older than 2 days
     let oldItems = saveItems.filter((i) => {
       const created = i.createdAt ? new Date(i.createdAt).getTime() : 0;
       return now - created > twoDaysInMs;
     });
 
-    // 2. Mix: Shuffle old items
     let mixed = oldItems.sort(() => 0.5 - Math.random());
 
-    // 3. Fill logic: If less than 3, add recent items or random
     if (mixed.length < 3) {
       const others = saveItems
         .filter((i) => !mixed.find((m) => m._id === i._id))
@@ -571,7 +539,6 @@ const Items = () => {
     }
   }, []);
 
-  // ✅ TASK 3: DESKTOP SIDEBAR FIX (z-index & pointer-events)
   const SidebarItem = ({ icon: Icon, label, path, active }) => (
     <button
       onClick={() => {
@@ -966,7 +933,6 @@ const Items = () => {
             </div>
           </div>
 
-          {/* ✅ TASK 2: RESURFACING UI IMPROVEMENT */}
           {!searchQuery && memoryFlashes.length > 0 && activeTab === "All" && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
@@ -992,7 +958,6 @@ const Items = () => {
                     }}
                     className="relative group bg-indigo-600/[0.04] border border-indigo-500/20 p-8 rounded-[2.5rem] cursor-pointer transition-all flex items-center justify-between shadow-[0_0_40px_rgba(79,70,229,0.1)] backdrop-blur-md overflow-hidden"
                   >
-                    {/* Glow Effect */}
                     <div className="absolute inset-0 bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     <div className="absolute -right-10 -top-10 w-32 h-32 bg-indigo-500/10 blur-3xl group-hover:bg-indigo-500/20 transition-all" />
 
@@ -1152,8 +1117,10 @@ const NodeExpansionModal = ({
             alt={node.title || "Focus"}
             onError={(e) => {
               e.target.onerror = null;
-              e.target.src =
-                "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800";
+              // 🔥 FALLBACK FIX IN MODAL TOO
+              e.target.src = `https://api.microlink.io/?url=${encodeURIComponent(
+                node.url,
+              )}&screenshot=true&embed=screenshot.url`;
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0e] via-transparent to-transparent" />

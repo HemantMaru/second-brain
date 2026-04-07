@@ -68,7 +68,7 @@ saveRoutes.post("/save-youtube", protect, saveYoutubeItem);
 
 // 📁 FILE UPLOADS
 saveRoutes.post("/save-pdf", protect, upload.single("file"), savePdfItem);
-saveRoutes.post("/save-image", protect, upload.single("file"), saveImageItem); // Dono mein 'upload' use karo
+saveRoutes.post("/save-image", protect, upload.single("file"), saveImageItem);
 
 // 🌍 PUBLIC ROUTE
 saveRoutes.get("/share/:id", getSharedItem);

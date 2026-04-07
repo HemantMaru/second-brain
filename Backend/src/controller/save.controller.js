@@ -13,7 +13,6 @@ dotenv.config();
 // Models & Libraries
 import saveModel from "../models/save.model.js";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
-
 import ImageKit from "imagekit";
 
 const imagekit = new ImageKit({
@@ -21,11 +20,6 @@ const imagekit = new ImageKit({
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
   urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
 });
-const getSmartThumbnail = (url) => {
-  return `https://api.microlink.io/?url=${encodeURIComponent(
-    url,
-  )}&screenshot=true&meta=false&embed=screenshot.url`;
-};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,7 +27,6 @@ const __dirname = path.dirname(__filename);
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // --- 🧠 AI HELPERS ---
-
 const cleanText = (text) => {
   return text
     .replace(
@@ -134,27 +127,17 @@ export const saveItem = async (req, res) => {
     const aiData = await generateAISummary(title, metaDesc + " " + bodyText);
     const finalTags = [...new Set([...(tags || []), ...aiData.suggestedTags])];
 
-    // 🔥 FORCE FIXES
-
-    let thumbnail = "";
-
-    // 🔥 ALWAYS USE MICROLINK (NO SCRAPING TRUST)
-    thumbnail = `https://api.microlink.io/?url=${encodeURIComponent(
-      url,
-    )}&screenshot=true&meta=false`;
-    // 🔥 STRICT RULES (IMPORTANT)
-
-    // 🔥 FINAL FIX: LinkedIn ke liye custom image force karo
+    // 🔥 STRICT THUMBNAIL LOGIC (Microlink Screenshot Engine)
+    let thumbnail = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&embed=screenshot.url`;
 
     let type = "link";
-
     if (url.includes("youtube")) type = "youtube";
     else if (url.includes("instagram")) type = "instagram";
     else if (url.includes("twitter") || url.includes("x.com")) type = "twitter";
     else if (url.includes("linkedin")) type = "linkedin";
     else if (url.includes("facebook")) type = "facebook";
-    let finalTitle = title;
 
+    let finalTitle = title;
     if (!finalTitle || finalTitle.trim() === "") {
       try {
         const parsedUrl = new URL(url);
@@ -163,6 +146,7 @@ export const saveItem = async (req, res) => {
         finalTitle = "Untitled Node";
       }
     }
+
     const item = new saveModel({
       title: finalTitle,
       url,
@@ -170,9 +154,9 @@ export const saveItem = async (req, res) => {
       collection: collection || "General",
       note: note || aiData.summary,
       shareId: nanoid(8),
-      thumbnail, // 🔥 ADD THIS
-      type, // 🔥 ADD THIS
-      user: req.user._id, // 🛡️ Added User Ownership
+      thumbnail,
+      type,
+      user: req.user._id,
     });
 
     const textToEmbed = `Title: ${title}. Summary: ${item.note}. Tags: ${finalTags.join(", ")}`;
@@ -181,7 +165,7 @@ export const saveItem = async (req, res) => {
     await item.save();
     res.status(201).json({ message: "Synapse Linked!", data: item });
   } catch (error) {
-    console.error("SAVE ERROR:", error); // 🔥 ADD THIS
+    console.error("SAVE ERROR:", error);
     res.status(500).json({ message: "Error saving link" });
   }
 };
@@ -202,7 +186,6 @@ export const searchItems = async (req, res) => {
     const queryVector = await getEmbedding(query);
     let vectorResults = [];
 
-    // Semantic Search logic
     if (queryVector) {
       vectorResults = await saveModel.aggregate([
         {
@@ -214,12 +197,11 @@ export const searchItems = async (req, res) => {
             limit: 15,
           },
         },
-        { $match: { user: userId } }, // 🛡️ CRITICAL: Filter results by user after search
+        { $match: { user: userId } },
         { $addFields: { score: { $meta: "vectorSearchScore" } } },
       ]);
     }
 
-    // Keyword Search logic
     const regexResults = await saveModel
       .find({
         user: userId,
@@ -230,7 +212,6 @@ export const searchItems = async (req, res) => {
       })
       .limit(15);
 
-    // Merge & Deduplicate
     const combined = [...regexResults, ...vectorResults];
     const uniqueResults = Array.from(
       new Map(combined.map((item) => [item._id.toString(), item])).values(),
@@ -248,7 +229,6 @@ export const editSavedItem = async (req, res) => {
     const { id } = req.params;
     const { note, collection, tags } = req.body;
 
-    // 🛡️ findOneAndUpdate with user check ensures user only edits their own items
     const updated = await saveModel.findOneAndUpdate(
       { _id: id, user: req.user._id },
       { note, collection, tags },
@@ -268,7 +248,7 @@ export const editSavedItem = async (req, res) => {
 // 4. Get User Graph (Filtered)
 export const getGraphData = async (req, res) => {
   try {
-    const items = await saveModel.find({ user: req.user._id }); // 🛡️ User filter
+    const items = await saveModel.find({ user: req.user._id });
     const nodes = items.map((item) => ({
       id: item._id.toString(),
       title: item.title,
@@ -321,7 +301,7 @@ export const getRecommendations = async (req, res) => {
 
     const recommendations = await saveModel
       .find({
-        user: req.user._id, // 🛡️
+        user: req.user._id,
         _id: { $ne: req.params.id },
         tags: { $in: currentItem.tags },
       })
@@ -353,7 +333,7 @@ export const chatWithBrain = async (req, res) => {
           limit: 3,
         },
       },
-      { $match: { user: userId } }, // 🛡️ Important for Multi-user privacy
+      { $match: { user: userId } },
       { $project: { title: 1, note: 1, _id: 0 } },
     ]);
 
@@ -403,14 +383,12 @@ export const savePdfItem = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No PDF found" });
 
-    // 1. ImageKit par file bhejo
     const ikResponse = await imagekit.upload({
-      file: req.file.buffer, // RAM se buffer uthaya
+      file: req.file.buffer,
       fileName: req.file.originalname,
       folder: "/neurovault/pdfs",
     });
 
-    // 2. PDF se text extract karo (Buffer use karke)
     const loadingTask = pdfjsLib.getDocument({
       data: new Uint8Array(req.file.buffer),
     });
@@ -423,11 +401,10 @@ export const savePdfItem = async (req, res) => {
       extractedText += content.items.map((item) => item.str).join(" ") + "\n";
     }
 
-    // 3. Database mein save karo
     const item = new saveModel({
       title: req.file.originalname.replace(".pdf", ""),
-      url: ikResponse.url, // 🔥 ImageKit ka live URL
-      thumbnail: "https://cdn-icons-png.flaticon.com/512/337/337946.png",
+      url: ikResponse.url,
+      thumbnail: "https://cdn-icons-png.flaticon.com/512/337/337946.png", // 🔥 STRICT PDF ICON
       type: "pdf",
       tags: ["pdf", "archives"],
       collection: req.body.collection || "Archives",
@@ -449,14 +426,12 @@ export const saveImageItem = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "Image required" });
 
-    // 1. ImageKit upload
     const ikResponse = await imagekit.upload({
       file: req.file.buffer,
       fileName: req.file.originalname,
       folder: "/neurovault/images",
     });
 
-    // 2. Gemini AI Analysis
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     const prompt =
       "Describe this image for a search database in one paragraph.";
@@ -470,11 +445,10 @@ export const saveImageItem = async (req, res) => {
     const result = await model.generateContent([prompt, imagePart]);
     const summary = result.response.text();
 
-    // 3. Database mein save karo
     const item = new saveModel({
       title: req.file.originalname,
-      url: ikResponse.url, // 🔥 ImageKit ka live URL
-      thumbnail: ikResponse.url,
+      url: ikResponse.url,
+      thumbnail: ikResponse.url, // 🔥 EXACT IMAGEKIT URL
       type: "image",
       tags: ["image", "visual"],
       collection: req.body.collection || "Gallery",
@@ -504,7 +478,6 @@ export const saveYoutubeItem = async (req, res) => {
       return res.status(400).json({ message: "Invalid YT Link" });
     }
 
-    // 🔥 STEP 1: Get REAL YouTube Title (oEmbed API)
     let realTitle = "YouTube Video";
 
     try {
@@ -515,7 +488,6 @@ export const saveYoutubeItem = async (req, res) => {
       console.log("⚠️ YT title fetch failed");
     }
 
-    // 🔥 STEP 2: Gemini se SMART title generate kar
     let finalTitle = realTitle;
 
     try {
@@ -545,12 +517,10 @@ export const saveYoutubeItem = async (req, res) => {
       console.log("⚠️ Gemini failed, using real title");
     }
 
-    // 🔥 STEP 3: Thumbnail
-    const thumbnail = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+    const thumbnail = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`; // 🔥 HIGH-Q YT THUMBNAIL
 
-    // 🔥 STEP 4: Save
     const item = new saveModel({
-      title: finalTitle, // ✅ FINAL TITLE (Gemini + Real)
+      title: finalTitle,
       url,
       thumbnail,
       type: "youtube",
@@ -562,8 +532,6 @@ export const saveYoutubeItem = async (req, res) => {
     });
 
     await item.save();
-    console.log("🔥 YOUTUBE CONTROLLER HIT");
-    console.log("FINAL TITLE:", finalTitle);
     res.status(201).json({
       message: "YouTube Node Created",
       data: item,
@@ -641,6 +609,7 @@ export const generateFlashcards = async (req, res) => {
     res.status(500).send();
   }
 };
+
 export const updateLastOpened = async (req, res) => {
   const item = await saveModel.findOneAndUpdate(
     { _id: req.params.id, user: req.user._id },
@@ -652,6 +621,7 @@ export const updateLastOpened = async (req, res) => {
 
   res.json(item);
 };
+
 export const getSharedItem = async (req, res) => {
   const item = await saveModel.findOne({ shareId: req.params.id });
   if (!item) return res.status(404).json({ message: "Not found" });
