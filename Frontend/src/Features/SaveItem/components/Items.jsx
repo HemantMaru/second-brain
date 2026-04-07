@@ -112,7 +112,7 @@ const NodeCard = memo(
           <img
             src={thumb}
             onLoad={() => setImgLoaded(true)}
-            className={`w-full h-full object-cover object-top transition-all duration-500 ${
+            className={`w-full h-full object-cover object-top-left transition-all duration-500 ${
               imgLoaded
                 ? "opacity-60 group-hover:opacity-90 group-hover:scale-110"
                 : "opacity-0"
