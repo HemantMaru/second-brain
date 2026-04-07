@@ -128,8 +128,7 @@ export const saveItem = async (req, res) => {
     const finalTags = [...new Set([...(tags || []), ...aiData.suggestedTags])];
 
     // 🔥 STRICT THUMBNAIL LOGIC (Microlink Screenshot Engine)
-    let thumbnail = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&embed=screenshot.url`;
-
+    let thumbnail = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true`;
     let type = "link";
     if (url.includes("youtube")) type = "youtube";
     else if (url.includes("instagram")) type = "instagram";
