@@ -142,8 +142,14 @@ export const saveItem = async (req, res) => {
     } catch (e) {
       thumbnail = "";
     }
-
-    if (!thumbnail) {
+    // 🔥 PLATFORM BASED THUMBNAIL FIX
+    if (url.includes("instagram.com")) {
+      thumbnail = `https://image.thum.io/get/width/600/crop/600/${url}`;
+    } else if (url.includes("twitter.com") || url.includes("x.com")) {
+      thumbnail = `https://image.thum.io/get/width/600/crop/600/${url}`;
+    } else if (url.includes("linkedin.com")) {
+      thumbnail = `https://image.thum.io/get/width/600/crop/600/${url}`;
+    } else if (!thumbnail) {
       thumbnail = `https://image.thum.io/get/width/800/crop/600/${url}`;
     }
     let type = "link";
