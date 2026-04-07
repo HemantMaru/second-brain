@@ -379,12 +379,16 @@ ${message}
 };
 
 // 8. PDF Processing (Ownership Added)
+// 8. PDF Processing (FIXED UPLOAD)
 export const savePdfItem = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No PDF found" });
 
+    // 🔥 FIX: Convert buffer to Base64 for ImageKit
+    const fileBase64 = req.file.buffer.toString("base64");
+
     const ikResponse = await imagekit.upload({
-      file: req.file.buffer,
+      file: fileBase64,
       fileName: req.file.originalname,
       folder: "/neurovault/pdfs",
     });
@@ -404,7 +408,7 @@ export const savePdfItem = async (req, res) => {
     const item = new saveModel({
       title: req.file.originalname.replace(".pdf", ""),
       url: ikResponse.url,
-      thumbnail: "https://cdn-icons-png.flaticon.com/512/337/337946.png", // 🔥 STRICT PDF ICON
+      thumbnail: "https://cdn-icons-png.flaticon.com/512/337/337946.png", // Strict PDF Icon
       type: "pdf",
       tags: ["pdf", "archives"],
       collection: req.body.collection || "Archives",
@@ -421,18 +425,21 @@ export const savePdfItem = async (req, res) => {
   }
 };
 
-// 9. Vision Processing (Ownership Added)
+// 9. Vision Processing (FIXED UPLOAD)
 export const saveImageItem = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "Image required" });
 
+    // 🔥 FIX: Convert buffer to Base64 for ImageKit
+    const fileBase64 = req.file.buffer.toString("base64");
+
     const ikResponse = await imagekit.upload({
-      file: req.file.buffer,
+      file: fileBase64,
       fileName: req.file.originalname,
       folder: "/neurovault/images",
     });
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const prompt =
       "Describe this image for a search database in one paragraph.";
     const imagePart = {
@@ -448,7 +455,7 @@ export const saveImageItem = async (req, res) => {
     const item = new saveModel({
       title: req.file.originalname,
       url: ikResponse.url,
-      thumbnail: ikResponse.url, // 🔥 EXACT IMAGEKIT URL
+      thumbnail: ikResponse.url, // Real image URL
       type: "image",
       tags: ["image", "visual"],
       collection: req.body.collection || "Gallery",
