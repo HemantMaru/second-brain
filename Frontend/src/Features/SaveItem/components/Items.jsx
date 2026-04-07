@@ -102,7 +102,7 @@ const NodeCard = memo(
         className="group relative bg-[#09090b]/60 backdrop-blur-md border border-white/5 rounded-[2.5rem] overflow-hidden flex flex-col min-h-[480px] lg:min-h-[520px] shadow-2xl transition-all hover:border-indigo-500/40 cursor-pointer will-change-transform w-full"
         onClick={onFocus}
       >
-        <div className="relative w-full h-[280px] lg:h-[320px] overflow-hidden bg-zinc-900 border-b border-white/5 shrink-0">
+        <div className="relative w-full h-[340px] lg:h-[400px] overflow-hidden bg-zinc-900 border-b border-white/5 shrink-0">
           {!imgLoaded && (
             <div className="absolute inset-0 animate-pulse bg-white/5 flex items-center justify-center">
               <BrainCircuit className="text-white/10" size={40} />
@@ -357,20 +357,17 @@ const Items = () => {
 
   // 🔥 THUMBNAIL LOGIC
   const getSmartThumbnail = useCallback((item) => {
-    if (!item || !item.url)
-      return "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800";
-
-    if (
-      item.thumbnail &&
-      item.thumbnail.startsWith("http") &&
-      !item.thumbnail.includes("microlink")
-    ) {
-      return item.thumbnail;
-    }
+    if (!item || !item.url) return "";
 
     const url = item.url;
     const lowUrl = url.toLowerCase();
 
+    // 🔥 INSTAGRAM FIX (YAHI ADD KARNA HAI)
+    if (url.includes("instagram.com")) {
+      return `https://image.thum.io/get/width/600/crop/1000/${url}`;
+    }
+
+    // YouTube
     if (lowUrl.includes("youtube.com") || lowUrl.includes("youtu.be")) {
       const vId = lowUrl.includes("youtu.be")
         ? url.split("youtu.be/")[1]?.split("?")[0]
@@ -379,9 +376,10 @@ const Items = () => {
       return vId ? `https://img.youtube.com/vi/${vId}/hqdefault.jpg` : "";
     }
 
+    // image link
     if (lowUrl.match(/\.(jpeg|jpg|png|webp|avif)$/)) return url;
 
-    // 🔥 FINAL FIX
+    // fallback
     return `https://image.thum.io/get/width/800/crop/600/${url}`;
   }, []);
   const resolveAssetProtocol = useCallback((url) => {
@@ -1116,7 +1114,7 @@ const NodeExpansionModal = ({
             decoding="async"
             src={getThumb(node)}
             loading="lazy"
-            className="w-full h-full object-cover opacity-60"
+            className="w-full h-full object-cover scale-125 opacity-60"
             alt={node.title || "Focus"}
             onError={(e) => {
               e.target.onerror = null;
