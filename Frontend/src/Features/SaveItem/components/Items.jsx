@@ -360,7 +360,14 @@ const Items = () => {
     if (!item || !item.url)
       return "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800";
 
-    if (item.thumbnail && item.thumbnail !== "") return item.thumbnail;
+    if (
+      item.thumbnail &&
+      item.thumbnail !== "" &&
+      !item.thumbnail.includes("undefined") &&
+      !item.thumbnail.includes("null")
+    ) {
+      return item.thumbnail;
+    }
 
     const url = item.url;
     const lowUrl = url.toLowerCase();
@@ -369,14 +376,15 @@ const Items = () => {
       const vId = lowUrl.includes("youtu.be")
         ? url.split("youtu.be/")[1]?.split("?")[0]
         : new URL(url).searchParams.get("v");
-      return vId
-        ? `https://img.youtube.com/vi/${vId}/hqdefault.jpg`
-        : "https://images.unsplash.com/photo-1508780709619-79562169bc64?q=80&w=800";
+
+      return vId ? `https://img.youtube.com/vi/${vId}/hqdefault.jpg` : "";
     }
 
     if (lowUrl.match(/\.(jpeg|jpg|png|webp|avif)$/)) return url;
 
-    return `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true`;
+    return `https://api.microlink.io/?url=${encodeURIComponent(
+      url,
+    )}&screenshot=true&meta=false`;
   }, []);
 
   const resolveAssetProtocol = useCallback((url) => {
