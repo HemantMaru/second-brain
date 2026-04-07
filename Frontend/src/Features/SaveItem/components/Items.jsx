@@ -121,9 +121,7 @@ const NodeCard = memo(
             onError={(e) => {
               e.target.onerror = null;
               // 🔥 BULLETPROOF FALLBACK IF MAIN THUMBNAIL FAILS
-              e.target.src = `https://api.microlink.io/?url=${encodeURIComponent(
-                item.url,
-              )}&screenshot=true&meta=false&embed=screenshot.url`;
+              e.target.src = `https://api.microlink.io/?url=${encodeURIComponent(item.url)}&screenshot=true`;
             }}
           />
 
@@ -378,7 +376,7 @@ const Items = () => {
 
     if (lowUrl.match(/\.(jpeg|jpg|png|webp|avif)$/)) return url;
 
-    return `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&embed=screenshot.url`;
+    return `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true`;
   }, []);
 
   const resolveAssetProtocol = useCallback((url) => {
@@ -1118,9 +1116,7 @@ const NodeExpansionModal = ({
             onError={(e) => {
               e.target.onerror = null;
               // 🔥 FALLBACK FIX IN MODAL TOO
-              e.target.src = `https://api.microlink.io/?url=${encodeURIComponent(
-                node.url,
-              )}&screenshot=true&embed=screenshot.url`;
+              e.target.src = `https://api.microlink.io/?url=${encodeURIComponent(node.url)}&screenshot=true`;
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0e] via-transparent to-transparent" />
