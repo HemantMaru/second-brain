@@ -96,48 +96,102 @@ async function generateAISummary(title, scrapedContent) {
 // --- 🛡️ CONTROLLERS ---
 
 // 1. Save Generic Link
-
 export const saveItem = async (req, res) => {
   try {
-    const { url, collection, tags, note } = req.body;
+    const { url, collection, note, tags } = req.body;
 
-    let title = url;
+    let response;
+    try {
+      response = await axios.get(url);
+    } catch (err) {
+      console.error("Fetch error:", err.message);
+      response = { data: "" };
+    }
+    const $ = cheerio.load(response.data);
+    let title =
+      $("meta[property='og:title']").attr("content") ||
+      $("meta[name='twitter:title']").attr("content") ||
+      $("title").text().trim();
+
+    if (!title || title === "No Title") {
+      try {
+        const parsedUrl = new URL(url);
+        title = parsedUrl.hostname.replace("www.", "");
+      } catch {
+        title = "Untitled Node";
+      }
+    }
+    const metaDesc = $('meta[name="description"]').attr("content") || "";
+    const bodyText = $("p").text().substring(0, 1000);
+
+    const aiData = await generateAISummary(title, metaDesc + " " + bodyText);
+    const finalTags = [...new Set([...(tags || []), ...aiData.suggestedTags])];
+
+    // 🔥 STRICT THUMBNAIL LOGIC (Microlink Screenshot Engine)
     let thumbnail = "";
 
-    // 🔥 LINK PREVIEW API CALL
+    // try OG image first
     try {
-      const preview = await axios.get(
-        `https://api.linkpreview.net/?key=${process.env.LINK_PREVIEW_API_KEY}&q=${encodeURIComponent(url)}`,
-      );
+      const ogImage =
+        $("meta[property='og:image']").attr("content") ||
+        $("meta[name='twitter:image']").attr("content");
 
-      title = preview.data.title || url;
-      thumbnail = preview.data.image || "";
-    } catch (err) {
-      console.log("Preview API failed:", err.response?.data || err.message);
-
-      // 🔥 FALLBACK (IMPORTANT)
+      if (ogImage && ogImage.startsWith("http")) {
+        thumbnail = ogImage;
+      }
+    } catch (e) {
+      thumbnail = "";
+    }
+    // 🔥 PLATFORM BASED THUMBNAIL FIX
+    if (url.includes("instagram.com")) {
+      thumbnail = `https://image.thum.io/get/width/600/crop/600/${url}`;
+    } else if (url.includes("twitter.com") || url.includes("x.com")) {
+      thumbnail = `https://image.thum.io/get/width/600/crop/600/${url}`;
+    } else if (url.includes("linkedin.com")) {
+      thumbnail = `https://image.thum.io/get/width/600/crop/600/${url}`;
+    } else if (!thumbnail) {
       thumbnail = `https://image.thum.io/get/width/800/crop/600/${url}`;
     }
-    // 🔥 FINAL FALLBACK (अगर image नहीं मिली)
-    if (!thumbnail) {
-      thumbnail = `https://image.thum.io/get/width/800/crop/600/${url}`;
+    let type = "link";
+    if (url.includes("youtube")) type = "youtube";
+    else if (url.includes("instagram")) type = "instagram";
+    else if (url.includes("twitter") || url.includes("x.com")) type = "twitter";
+    else if (url.includes("linkedin")) type = "linkedin";
+    else if (url.includes("facebook")) type = "facebook";
+
+    let finalTitle = title;
+    if (!finalTitle || finalTitle.trim() === "") {
+      try {
+        const parsedUrl = new URL(url);
+        finalTitle = parsedUrl.hostname.replace("www.", "");
+      } catch {
+        finalTitle = "Untitled Node";
+      }
     }
 
-    const newItem = await Save.create({
-      user: req.user._id,
+    const item = new saveModel({
+      title: finalTitle,
       url,
-      title,
+      tags: finalTags,
+      collection: collection || "General",
+      note: note || aiData.summary,
+      shareId: nanoid(8),
       thumbnail,
-      collection,
-      tags,
-      note,
+      type,
+      user: req.user._id,
     });
 
-    res.status(201).json(newItem);
+    const textToEmbed = `Title: ${title}. Summary: ${item.note}. Tags: ${finalTags.join(", ")}`;
+    item.embedding = (await getEmbedding(textToEmbed)) || [];
+
+    await item.save();
+    res.status(201).json({ message: "Synapse Linked!", data: item });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("SAVE ERROR:", error);
+    res.status(500).json({ message: "Error saving link" });
   }
 };
+
 // 2. Multi-Vector Search (Strict User Isolation)
 export const searchItems = async (req, res) => {
   try {
