@@ -126,10 +126,7 @@ const NodeCard = memo(
           )}
 
           <img
-            src={
-              finalThumb ||
-              "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800"
-            }
+            src={finalThumb}
             onLoad={() => setImgLoaded(true)}
             className={`w-full h-full object-cover transition-all duration-500 ${
               imgLoaded
@@ -141,7 +138,7 @@ const NodeCard = memo(
               e.target.onerror = null;
               e.target.src = `https://api.microlink.io/?url=${encodeURIComponent(
                 item.url,
-              )}&screenshot=true&meta=false&embed=screenshot.url`;
+              )}&screenshot=true`;
             }}
           />
 

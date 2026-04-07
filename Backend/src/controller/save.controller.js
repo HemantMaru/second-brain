@@ -140,18 +140,21 @@ export const saveItem = async (req, res) => {
       $("meta[property='og:image']").attr("content") ||
       $("meta[name='twitter:image']").attr("content");
 
+    // 🔥 UNIVERSAL FALLBACK
+    if (!thumbnail || thumbnail.includes("logo") || thumbnail.length < 10) {
+      thumbnail = `https://api.microlink.io/?url=${encodeURIComponent(
+        url,
+      )}&screenshot=true&meta=false&embed=screenshot.url`;
+    }
     // 🔥 STRICT RULES (IMPORTANT)
     if (url.includes("youtube")) {
       // YouTube already handled separately
-    } else if (url.includes("instagram")) {
-      // keep OG image
+    } else if (url.includes("instagram.com")) {
+      thumbnail = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true`;
     } else if (url.includes("twitter.com") || url.includes("x.com")) {
-      // ❌ DON'T use logo
-      // ✅ Always use real preview (screenshot)
-      thumbnail = getSmartThumbnail(url);
+      thumbnail = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true`;
     } else if (url.includes("linkedin.com")) {
-      // ❌ LinkedIn OG broken → use clean logo
-      thumbnail = "https://cdn-icons-png.flaticon.com/512/174/174857.png";
+      thumbnail = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true`;
     } else {
       // fallback for normal websites
       if (!thumbnail) {
@@ -442,7 +445,7 @@ export const savePdfItem = async (req, res) => {
     const item = new saveModel({
       title: req.file.originalname.replace(".pdf", ""),
       url: ikResponse.url, // 🔥 ImageKit ka live URL
-      thumbnail: "/pdf-icon.png",
+      thumbnail: "https://cdn-icons-png.flaticon.com/512/337/337946.png",
       type: "pdf",
       tags: ["pdf", "archives"],
       collection: req.body.collection || "Archives",
