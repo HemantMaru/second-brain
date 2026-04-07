@@ -8,6 +8,7 @@ import { nanoid } from "nanoid";
 import mongoose from "mongoose";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from "dotenv";
+dotenv.config();
 
 // Models & Libraries
 import saveModel from "../models/save.model.js";
@@ -509,29 +510,81 @@ export const saveImageItem = async (req, res) => {
 export const saveYoutubeItem = async (req, res) => {
   try {
     const { url, collection } = req.body;
+
     let videoId = url.includes("v=")
       ? url.split("v=")[1]?.split("&")[0]
       : url.split("/").pop();
 
-    if (!videoId) return res.status(400).json({ message: "Invalid YT Link" });
+    if (!videoId) {
+      return res.status(400).json({ message: "Invalid YT Link" });
+    }
 
+    // 🔥 STEP 1: Get REAL YouTube Title (oEmbed API)
+    let realTitle = "YouTube Video";
+
+    try {
+      const oembedUrl = `https://www.youtube.com/oembed?url=${url}&format=json`;
+      const ytRes = await axios.get(oembedUrl);
+      realTitle = ytRes.data.title;
+    } catch (err) {
+      console.log("⚠️ YT title fetch failed");
+    }
+
+    // 🔥 STEP 2: Gemini se SMART title generate kar
+    let finalTitle = realTitle;
+
+    try {
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+      });
+
+      const prompt = `
+      You are an AI assistant.
+      Task: Improve the YouTube title to make it short, clean, and meaningful.
+
+      Rules:
+      - Remove unnecessary words like "full video", "official", etc.
+      - Keep it under 8 words
+      - Make it catchy and clear
+
+      Original Title: ${realTitle}
+      `;
+
+      const result = await model.generateContent(prompt);
+      const aiTitle = result.response.text().trim();
+
+      if (aiTitle && aiTitle.length > 3) {
+        finalTitle = aiTitle;
+      }
+    } catch (err) {
+      console.log("⚠️ Gemini failed, using real title");
+    }
+
+    // 🔥 STEP 3: Thumbnail
     const thumbnail = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
 
+    // 🔥 STEP 4: Save
     const item = new saveModel({
-      title: `YouTube Fragment`,
+      title: finalTitle, // ✅ FINAL TITLE (Gemini + Real)
       url,
       thumbnail,
       type: "youtube",
       tags: ["video", "youtube"],
       collection: collection || "Streams",
-      note: "YouTube synthesis in progress...",
+      note: `Saved from YouTube: ${realTitle}`,
       shareId: nanoid(8),
       user: req.user._id,
     });
 
     await item.save();
-    res.status(201).json({ message: "YouTube Node Created", data: item });
+    console.log("🔥 YOUTUBE CONTROLLER HIT");
+    console.log("FINAL TITLE:", finalTitle);
+    res.status(201).json({
+      message: "YouTube Node Created",
+      data: item,
+    });
   } catch (err) {
+    console.error("YT ERROR:", err);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
