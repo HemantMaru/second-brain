@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -14,6 +14,7 @@ import {
   Plus,
   Cpu,
   Globe,
+  LayoutGrid, // 🔥 Imported for the /saved button
 } from "lucide-react";
 // Import saveYoutubeAPI because it handles social media extraction in your system
 import {
@@ -23,6 +24,84 @@ import {
   saveYoutubeAPI,
 } from "../services/save.api";
 
+// ===========================================================================
+// --- 🌌 3D NEURAL STARFIELD BACKGROUND COMPONENT ---
+// ===========================================================================
+const NeuralStarfield = () => {
+  // Generate random coordinates for box-shadow to simulate stars
+  const generateStars = (count) => {
+    let shadow = "";
+    for (let i = 0; i < count; i++) {
+      const x = Math.floor(Math.random() * 2000);
+      const y = Math.floor(Math.random() * 2000);
+      shadow += `${x}px ${y}px #ffffff${i % 3 === 0 ? "80" : "40"}`;
+      if (i < count - 1) shadow += ", ";
+    }
+    return shadow;
+  };
+
+  const starsSmall = generateStars(300);
+  const starsMedium = generateStars(100);
+  const starsLarge = generateStars(50);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#020204]">
+      {/* Dynamic Glowing Orbs */}
+      <div className="absolute top-[-15%] left-[-10%] w-[60%] h-[60%] bg-indigo-600/15 blur-[140px] rounded-full animate-pulse" />
+      <div
+        className="absolute bottom-[-15%] right-[-10%] w-[50%] h-[50%] bg-teal-500/10 blur-[120px] rounded-full animate-pulse"
+        style={{ animationDelay: "2s" }}
+      />
+
+      {/* 3D Starfield Layers */}
+      <div id="stars-small" />
+      <div id="stars-medium" />
+      <div id="stars-large" />
+
+      {/* CSS Animations injected directly for the 3D drifting effect */}
+      <style>{`
+        @keyframes animStar {
+          from { transform: translateY(0px); }
+          to { transform: translateY(-2000px); }
+        }
+        #stars-small {
+          width: 1px; height: 1px; background: transparent;
+          box-shadow: ${starsSmall};
+          animation: animStar 100s linear infinite;
+        }
+        #stars-small:after {
+          content: " "; position: absolute; top: 2000px;
+          width: 1px; height: 1px; background: transparent;
+          box-shadow: ${starsSmall};
+        }
+        #stars-medium {
+          width: 2px; height: 2px; background: transparent;
+          box-shadow: ${starsMedium};
+          animation: animStar 150s linear infinite;
+        }
+        #stars-medium:after {
+          content: " "; position: absolute; top: 2000px;
+          width: 2px; height: 2px; background: transparent;
+          box-shadow: ${starsMedium};
+        }
+        #stars-large {
+          width: 3px; height: 3px; background: transparent;
+          box-shadow: ${starsLarge};
+          animation: animStar 200s linear infinite;
+        }
+        #stars-large:after {
+          content: " "; position: absolute; top: 2000px;
+          width: 3px; height: 3px; background: transparent;
+          box-shadow: ${starsLarge};
+        }
+      `}</style>
+    </div>
+  );
+};
+
+// ===========================================================================
+// --- 🛰️ MAIN COMPONENT ---
+// ===========================================================================
 const CreateNode = () => {
   const navigate = useNavigate();
   const [mode, setMode] = useState("url"); // 'url', 'pdf', or 'image'
@@ -140,13 +219,9 @@ const CreateNode = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#020204] text-white flex items-center justify-center p-4 sm:p-6 selection:bg-indigo-500/30 font-sans overflow-hidden">
-      {/* --- Ambient Neural Background --- */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-15%] left-[-10%] w-[60%] h-[60%] bg-indigo-600/10 blur-[140px] rounded-full animate-pulse" />
-        <div className="absolute bottom-[-15%] right-[-10%] w-[50%] h-[50%] bg-teal-500/5 blur-[120px] rounded-full" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none" />
-      </div>
+    <div className="min-h-screen bg-transparent text-white flex items-center justify-center p-4 sm:p-6 selection:bg-indigo-500/30 font-sans overflow-hidden relative">
+      {/* --- 🔥 3D Animated Background --- */}
+      <NeuralStarfield />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -155,6 +230,7 @@ const CreateNode = () => {
       >
         {/* --- Floating Header --- */}
         <div className="flex items-center justify-between mb-8 px-2">
+          {/* Back Button */}
           <motion.button
             whileHover={{ x: -4, backgroundColor: "rgba(255,255,255,0.1)" }}
             whileTap={{ scale: 0.95 }}
@@ -164,30 +240,38 @@ const CreateNode = () => {
             <ArrowLeft size={20} />
           </motion.button>
 
-          <div className="text-center">
-            <h2 className="text-2xl font-black italic tracking-tighter uppercase flex items-center gap-2 justify-center">
-              <Sparkles className="text-indigo-500" size={20} />
+          {/* Title Area */}
+          <div className="text-center flex-1 mx-4">
+            <h2 className="text-xl sm:text-2xl font-black italic tracking-tighter uppercase flex items-center justify-center gap-2">
+              <Sparkles className="text-indigo-500" size={18} />
               Initialize <span className="text-indigo-500">Node</span>
             </h2>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-bold mt-1">
-              Multi-Source Integration Protocol
+            <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] sm:tracking-[0.3em] text-slate-500 font-bold mt-1">
+              Multi-Source Integration
             </p>
           </div>
 
-          <div className="w-12 h-12 bg-indigo-600/20 border border-indigo-500/30 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.2)]">
-            <Zap
-              size={22}
-              className="fill-indigo-500 text-indigo-500 animate-pulse"
+          {/* 🔥 Vault / Saved Nodes Navigation Button */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate("/saved")}
+            title="Open Neural Vault"
+            className="w-12 h-12 bg-indigo-600/20 border border-indigo-500/30 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.2)] hover:bg-indigo-600/40 hover:border-indigo-400 transition-all cursor-pointer backdrop-blur-md group"
+          >
+            <LayoutGrid
+              size={20}
+              className="text-indigo-400 group-hover:text-white transition-colors animate-pulse"
             />
-          </div>
+          </motion.button>
         </div>
 
         {/* --- Main UI Card --- */}
-        <div className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-6 sm:p-10 backdrop-blur-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] relative overflow-hidden">
+        <div className="bg-[#09090b]/80 border border-white/10 rounded-[2.5rem] p-6 sm:p-10 backdrop-blur-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)] relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-50" />
 
           {/* --- Tab Selector --- */}
-          <div className="flex p-1.5 bg-black/40 border border-white/5 rounded-2xl mb-10 relative">
+          <div className="flex p-1.5 bg-black/60 border border-white/5 rounded-2xl mb-10 relative">
             {["url", "pdf", "image"].map((m) => (
               <button
                 key={m}
@@ -195,15 +279,15 @@ const CreateNode = () => {
                   setMode(m);
                   setStatus(null);
                 }}
-                className={`relative z-10 flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 ${
+                className={`relative z-10 flex-1 py-3 px-2 sm:px-4 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-300 ${
                   mode === m
                     ? "text-white"
                     : "text-slate-500 hover:text-slate-300"
                 }`}
               >
-                {m === "url" && <Globe size={14} />}
-                {m === "pdf" && <FileUp size={14} />}
-                {m === "image" && <ImageIcon size={14} />}
+                {m === "url" && <Globe size={14} className="shrink-0" />}
+                {m === "pdf" && <FileUp size={14} className="shrink-0" />}
+                {m === "image" && <ImageIcon size={14} className="shrink-0" />}
                 {m}
                 {mode === m && (
                   <motion.div
@@ -228,7 +312,7 @@ const CreateNode = () => {
             >
               {mode === "url" && (
                 <div className="group space-y-3">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
                     <Fingerprint size={12} className="text-indigo-500" /> Source
                     Data URI
                   </label>
@@ -238,7 +322,7 @@ const CreateNode = () => {
                       placeholder="Paste YouTube, X, LinkedIn, FB or Web link..."
                       value={url}
                       onChange={(e) => setUrl(e.target.value)}
-                      className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-5 outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all text-sm font-medium placeholder:text-slate-700"
+                      className="w-full bg-black/50 border border-white/10 rounded-2xl px-6 py-5 outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all text-sm font-medium placeholder:text-slate-600"
                     />
                     <div className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-700 group-focus-within:text-indigo-500 transition-colors">
                       <Plus size={20} />
@@ -249,11 +333,11 @@ const CreateNode = () => {
 
               {(mode === "pdf" || mode === "image") && (
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
                     <Cpu size={12} className="text-teal-500" />{" "}
                     {mode === "pdf" ? "Document Processor" : "Vision Ingestion"}
                   </label>
-                  <div className="relative group border-2 border-dashed border-white/10 rounded-[2rem] bg-black/20 p-10 transition-all hover:bg-white/[0.02] hover:border-indigo-500/50 text-center cursor-pointer overflow-hidden">
+                  <div className="relative group border-2 border-dashed border-white/10 rounded-[2rem] bg-black/30 p-8 sm:p-10 transition-all hover:bg-white/[0.02] hover:border-indigo-500/50 text-center cursor-pointer overflow-hidden">
                     <input
                       type="file"
                       accept={mode === "pdf" ? ".pdf" : "image/*"}
@@ -279,20 +363,20 @@ const CreateNode = () => {
                       </motion.div>
                     ) : (
                       <div className="flex flex-col items-center">
-                        <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500">
+                        <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500 shadow-inner">
                           {mode === "pdf" ? (
                             <FileUp
                               size={32}
-                              className="text-slate-400 group-hover:text-indigo-400"
+                              className="text-slate-400 group-hover:text-indigo-400 transition-colors"
                             />
                           ) : (
                             <ImageIcon
                               size={32}
-                              className="text-slate-400 group-hover:text-indigo-400"
+                              className="text-slate-400 group-hover:text-indigo-400 transition-colors"
                             />
                           )}
                         </div>
-                        <p className="text-xs font-black text-slate-400 uppercase tracking-wider">
+                        <p className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-wider px-2 break-all">
                           {mode === "pdf"
                             ? file
                               ? file.name
@@ -310,7 +394,7 @@ const CreateNode = () => {
               {/* --- Metadata Grid --- */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
                     Vault Sector (Collection)
                   </label>
                   <input
@@ -318,11 +402,11 @@ const CreateNode = () => {
                     placeholder="e.g. Research"
                     value={collection}
                     onChange={(e) => setCollection(e.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-indigo-500/50 transition-all text-xs font-bold tracking-wider placeholder:text-slate-700"
+                    className="w-full bg-black/50 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-indigo-500/50 transition-all text-xs font-bold tracking-wider placeholder:text-slate-600"
                   />
                 </div>
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
                     Metadata Tags
                   </label>
                   <input
@@ -330,7 +414,7 @@ const CreateNode = () => {
                     placeholder="ai, react, design..."
                     value={tags}
                     onChange={(e) => setTags(e.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-indigo-500/50 transition-all text-xs font-bold tracking-wider placeholder:text-slate-700"
+                    className="w-full bg-black/50 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-indigo-500/50 transition-all text-xs font-bold tracking-wider placeholder:text-slate-600"
                   />
                 </div>
               </div>
@@ -353,11 +437,15 @@ const CreateNode = () => {
                 }`}
               >
                 {status.type === "loading" && (
-                  <Loader2 size={16} className="animate-spin" />
+                  <Loader2 size={16} className="animate-spin shrink-0" />
                 )}
-                {status.type === "success" && <CheckCircle2 size={16} />}
-                {status.type === "error" && <AlertCircle size={16} />}
-                <span className="text-[10px] font-black uppercase tracking-widest leading-none">
+                {status.type === "success" && (
+                  <CheckCircle2 size={16} className="shrink-0" />
+                )}
+                {status.type === "error" && (
+                  <AlertCircle size={16} className="shrink-0" />
+                )}
+                <span className="text-[10px] font-black uppercase tracking-widest leading-normal">
                   {status.message}
                 </span>
               </motion.div>
@@ -370,10 +458,10 @@ const CreateNode = () => {
             whileTap={{ scale: 0.98 }}
             onClick={handleSave}
             disabled={loading}
-            className={`w-full mt-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-3 transition-all relative overflow-hidden group ${
+            className={`w-full mt-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] flex items-center justify-center gap-3 transition-all relative overflow-hidden group ${
               status?.type === "success"
-                ? "bg-emerald-500 text-white"
-                : "bg-indigo-600 text-white"
+                ? "bg-emerald-500 text-white shadow-[0_0_40px_rgba(16,185,129,0.3)]"
+                : "bg-indigo-600 text-white shadow-[0_0_40px_rgba(79,70,229,0.3)] hover:shadow-[0_0_60px_rgba(79,70,229,0.5)]"
             } ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
@@ -392,16 +480,16 @@ const CreateNode = () => {
         </div>
 
         {/* --- Security Footer --- */}
-        <div className="flex justify-center items-center gap-8 mt-8 opacity-40">
+        <div className="flex justify-center items-center gap-4 sm:gap-8 mt-8 opacity-40">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,1)]" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">
+            <span className="text-[7px] sm:text-[8px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-slate-400">
               E2E Neural Encryption
             </span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,1)]" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">
+            <span className="text-[7px] sm:text-[8px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-slate-400">
               Deep Synapse Analysis
             </span>
           </div>
