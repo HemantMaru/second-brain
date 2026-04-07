@@ -7,7 +7,12 @@ const ProtectedRoute = ({ children }) => {
   if (loading) {
     return (
       <div className="loader-container">
-        <div className="spinner"></div>
+        <div className="orbital-spinner">
+          <div className="orbital-ring"></div>
+          <div className="orbital-ring"></div>
+          <div className="orbital-ring"></div>
+          <div className="orbital-core"></div>
+        </div>
       </div>
     );
   }
