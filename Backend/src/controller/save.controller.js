@@ -128,7 +128,20 @@ export const saveItem = async (req, res) => {
     const finalTags = [...new Set([...(tags || []), ...aiData.suggestedTags])];
 
     // 🔥 STRICT THUMBNAIL LOGIC (Microlink Screenshot Engine)
-    let thumbnail = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true`;
+    let thumbnail = "";
+
+    // try OG image first
+    try {
+      const ogImage =
+        $("meta[property='og:image']").attr("content") ||
+        $("meta[name='twitter:image']").attr("content");
+
+      if (ogImage && ogImage.startsWith("http")) {
+        thumbnail = ogImage;
+      }
+    } catch (e) {
+      thumbnail = "";
+    }
     let type = "link";
     if (url.includes("youtube")) type = "youtube";
     else if (url.includes("instagram")) type = "instagram";

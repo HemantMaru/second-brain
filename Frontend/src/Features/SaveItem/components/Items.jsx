@@ -362,9 +362,8 @@ const Items = () => {
 
     if (
       item.thumbnail &&
-      item.thumbnail !== "" &&
-      !item.thumbnail.includes("undefined") &&
-      !item.thumbnail.includes("null")
+      item.thumbnail.startsWith("http") &&
+      !item.thumbnail.includes("microlink")
     ) {
       return item.thumbnail;
     }
@@ -384,7 +383,7 @@ const Items = () => {
 
     return `https://api.microlink.io/?url=${encodeURIComponent(
       url,
-    )}&screenshot=true&meta=false`;
+    )}&screenshot=true`;
   }, []);
 
   const resolveAssetProtocol = useCallback((url) => {
