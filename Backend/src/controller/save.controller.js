@@ -107,17 +107,17 @@ export const saveItem = async (req, res) => {
     // 🔥 LINK PREVIEW API CALL
     try {
       const preview = await axios.get(
-        `https://api.linkpreview.net/?key=${process.env.LINK_PREVIEW_API_KEY}&q=${encodeURIComponent(
-          url,
-        )}`,
+        `https://api.linkpreview.net/?key=${process.env.LINK_PREVIEW_API_KEY}&q=${encodeURIComponent(url)}`,
       );
 
       title = preview.data.title || url;
       thumbnail = preview.data.image || "";
     } catch (err) {
-      console.log("Preview API failed:", err.message);
-    }
+      console.log("Preview API failed:", err.response?.data || err.message);
 
+      // 🔥 FALLBACK (IMPORTANT)
+      thumbnail = `https://image.thum.io/get/width/800/crop/600/${url}`;
+    }
     // 🔥 FINAL FALLBACK (अगर image नहीं मिली)
     if (!thumbnail) {
       thumbnail = `https://image.thum.io/get/width/800/crop/600/${url}`;
