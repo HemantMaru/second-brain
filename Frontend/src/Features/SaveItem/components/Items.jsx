@@ -119,37 +119,9 @@ const NodeCard = memo(
             }`}
             alt={item.title || "preview"}
             onError={(e) => {
-              e.target.onerror = null; // Infinite loop rokne ke liye
-              const fallbackUrl = (item.url || "").toLowerCase();
-
-              // 🔥 BULLETPROOF LOGO FALLBACKS FOR SOCIAL MEDIA
-              if (fallbackUrl.includes("linkedin.com")) {
-                e.target.src =
-                  "https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png";
-                e.target.style.objectFit = "contain";
-                e.target.style.padding = "2rem";
-              } else if (
-                fallbackUrl.includes("twitter.com") ||
-                fallbackUrl.includes("x.com")
-              ) {
-                e.target.src =
-                  "https://upload.wikimedia.org/wikipedia/commons/c/ce/X_logo_2023.svg";
-                e.target.style.objectFit = "contain";
-                e.target.style.padding = "2rem";
-              } else if (fallbackUrl.includes("instagram.com")) {
-                e.target.src =
-                  "https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png";
-                e.target.style.objectFit = "contain";
-                e.target.style.padding = "2rem";
-              } else if (fallbackUrl.includes("facebook.com")) {
-                e.target.src =
-                  "https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg";
-                e.target.style.objectFit = "contain";
-                e.target.style.padding = "2rem";
-              } else {
-                e.target.src =
-                  "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800";
-              }
+              e.target.onerror = null;
+              // 🔥 BULLETPROOF FALLBACK IF MAIN THUMBNAIL FAILS
+              e.target.src = `https://api.microlink.io/?url=${encodeURIComponent(item.url)}&screenshot=true`;
             }}
           />
 
@@ -1150,35 +1122,8 @@ const NodeExpansionModal = ({
             alt={node.title || "Focus"}
             onError={(e) => {
               e.target.onerror = null;
-              const fallbackUrl = (node.url || "").toLowerCase();
-
-              if (fallbackUrl.includes("linkedin.com")) {
-                e.target.src =
-                  "https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png";
-                e.target.style.objectFit = "contain";
-                e.target.style.padding = "2rem";
-              } else if (
-                fallbackUrl.includes("twitter.com") ||
-                fallbackUrl.includes("x.com")
-              ) {
-                e.target.src =
-                  "https://upload.wikimedia.org/wikipedia/commons/c/ce/X_logo_2023.svg";
-                e.target.style.objectFit = "contain";
-                e.target.style.padding = "2rem";
-              } else if (fallbackUrl.includes("instagram.com")) {
-                e.target.src =
-                  "https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png";
-                e.target.style.objectFit = "contain";
-                e.target.style.padding = "2rem";
-              } else if (fallbackUrl.includes("facebook.com")) {
-                e.target.src =
-                  "https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg";
-                e.target.style.objectFit = "contain";
-                e.target.style.padding = "2rem";
-              } else {
-                e.target.src =
-                  "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800";
-              }
+              // 🔥 FALLBACK FIX IN MODAL TOO
+              e.target.src = `https://api.microlink.io/?url=${encodeURIComponent(node.url)}&screenshot=true`;
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0e] via-transparent to-transparent" />
