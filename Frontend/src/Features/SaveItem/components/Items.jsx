@@ -54,6 +54,7 @@ import {
   History,
   Camera,
   AlertCircle,
+  CheckCircle2, // Added missing icon for copy feedback
 } from "lucide-react";
 
 // --- 🛰️ API Neural Gateway Services ---
@@ -82,6 +83,7 @@ const NodeCard = memo(
     classify,
     contentIcon,
     autoTags,
+    isCopied, // Prop for share feedback
   }) => {
     const [imgLoaded, setImgLoaded] = useState(false);
     const type = classify(item.url);
@@ -99,10 +101,10 @@ const NodeCard = memo(
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
         whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-        className="group relative bg-[#09090b]/60 backdrop-blur-md border border-white/5 rounded-[2.5rem] overflow-hidden flex flex-col min-h-[480px] lg:min-h-[520px] shadow-2xl transition-all hover:border-indigo-500/40 cursor-pointer will-change-transform w-full"
+        className="group relative bg-[#09090b]/60 backdrop-blur-md border border-white/5 rounded-[2.5rem] overflow-hidden flex flex-col min-h-[480px] lg:min-h-[520px] shadow-2xl transition-all hover:border-indigo-500/40 hover:shadow-[0_0_30px_rgba(79,70,229,0.15)] cursor-pointer will-change-transform w-full"
         onClick={onFocus}
       >
-        <div className="relative w-full h-[280px] lg:h-[320px] overflow-hidden bg-zinc-900 border-b border-white/5 shrink-0">
+        <div className="relative w-full h-[280px] lg:h-[320px] overflow-hidden bg-zinc-950 border-b border-white/5 shrink-0">
           {!imgLoaded && (
             <div className="absolute inset-0 animate-pulse bg-white/5 flex items-center justify-center">
               <BrainCircuit className="text-white/10" size={40} />
@@ -112,7 +114,7 @@ const NodeCard = memo(
           <img
             src={thumb}
             onLoad={() => setImgLoaded(true)}
-            className={`w-full h-full object-cover  transition-all duration-500 ${
+            className={`w-full h-full object-cover transition-all duration-700 ${
               imgLoaded
                 ? "opacity-60 group-hover:opacity-90 group-hover:scale-110"
                 : "opacity-0"
@@ -120,20 +122,22 @@ const NodeCard = memo(
             alt={item.title || "preview"}
             onError={(e) => {
               e.target.onerror = null;
-              // 🔥 BULLETPROOF FALLBACK IF MAIN THUMBNAIL FAILS
               e.target.src = `https://image.thum.io/get/width/800/crop/600/${item.url}`;
             }}
           />
 
           {type === "Videos" && (
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <PlayCircle className="text-white fill-indigo-600/20" size={48} />
+              <PlayCircle
+                className="text-white fill-indigo-600/20 drop-shadow-[0_0_15px_rgba(79,70,229,0.5)]"
+                size={48}
+              />
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/20 to-transparent opacity-90" />
           <div className="absolute top-6 left-6 flex items-center gap-3 bg-black/80 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10 shadow-2xl z-10">
             {contentIcon}
-            <span className="text-[9px] font-black uppercase tracking-widest">
+            <span className="text-[9px] font-black uppercase tracking-widest text-white">
               {type}
             </span>
           </div>
@@ -165,8 +169,8 @@ const NodeCard = memo(
             )}
 
             <div className="flex items-center gap-2 opacity-40 group-hover:opacity-100 transition-opacity pt-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest truncate">
+              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_5px_#6366f1]" />
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">
                 {item.collection || "Omni_Vault"}
               </span>
             </div>
@@ -175,14 +179,14 @@ const NodeCard = memo(
           <div className="flex items-center justify-between pt-6 border-t border-white/5 mt-auto">
             <div className="flex gap-5">
               <button
-                onClick={async (e) => {
+                onClick={(e) => {
                   e.stopPropagation();
-                  await onPin();
+                  onPin(item);
                 }}
                 className={`transition-all hover:scale-125 active:scale-90 ${
                   item.isPinned
-                    ? "text-orange-500"
-                    : "text-slate-700 hover:text-white"
+                    ? "text-orange-500 drop-shadow-[0_0_5px_rgba(249,115,22,0.5)]"
+                    : "text-slate-600 hover:text-white"
                 }`}
               >
                 <Pin size={18} fill={item.isPinned ? "currentColor" : "none"} />
@@ -190,14 +194,14 @@ const NodeCard = memo(
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onShare();
+                  onShare(item);
                 }}
-                className="text-slate-700 hover:text-white hover:scale-125 active:scale-90 transition-all"
+                className={`${isCopied ? "text-green-400" : "text-slate-600"} hover:text-white hover:scale-125 active:scale-90 transition-all`}
               >
-                <Share2 size={18} />
+                {isCopied ? <CheckCircle2 size={18} /> : <Share2 size={18} />}
               </button>
             </div>
-            <span className="text-[9px] font-black text-slate-800 tracking-widest italic uppercase">
+            <span className="text-[9px] font-black text-slate-700 tracking-widest italic uppercase">
               0x{item._id?.slice(-4) || "NULL"}
             </span>
           </div>
@@ -239,6 +243,9 @@ const Items = () => {
     text: "",
     type: "info",
   });
+
+  // 🔥 Optimistic UI State for Instant Pinning
+  const [localPins, setLocalPins] = useState({});
 
   const handleLogout = useCallback(async () => {
     try {
@@ -316,6 +323,7 @@ const Items = () => {
   }, [handleGetCreateSave]);
 
   useEffect(() => {
+    // Scroll lock for modals
     if (focusedNode || isRecallOpen) {
       document.body.style.overflow = "hidden";
     } else {
@@ -329,6 +337,7 @@ const Items = () => {
   useEffect(() => {
     const timer = setTimeout(async () => {
       if (searchQuery.trim() === "") {
+        setIsSearching(false);
         handleGetCreateSave();
         return;
       }
@@ -355,35 +364,6 @@ const Items = () => {
     return "Web";
   }, []);
 
-  // 🔥 THUMBNAIL LOGIC
-  const getSmartThumbnail = useCallback((item) => {
-    if (!item || !item.url)
-      return "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800";
-
-    if (
-      item.thumbnail &&
-      item.thumbnail.startsWith("http") &&
-      !item.thumbnail.includes("microlink")
-    ) {
-      return item.thumbnail;
-    }
-
-    const url = item.url;
-    const lowUrl = url.toLowerCase();
-
-    if (lowUrl.includes("youtube.com") || lowUrl.includes("youtu.be")) {
-      const vId = lowUrl.includes("youtu.be")
-        ? url.split("youtu.be/")[1]?.split("?")[0]
-        : new URL(url).searchParams.get("v");
-
-      return vId ? `https://img.youtube.com/vi/${vId}/hqdefault.jpg` : "";
-    }
-
-    if (lowUrl.match(/\.(jpeg|jpg|png|webp|avif)$/)) return url;
-
-    // 🔥 FINAL FIX
-    return `https://image.thum.io/get/width/800/crop/600/${url}`;
-  }, []);
   const resolveAssetProtocol = useCallback((url) => {
     if (!url) return "";
     return url.startsWith("http")
@@ -391,8 +371,37 @@ const Items = () => {
       : url.replace("file://", "http://localhost:3000/uploads/");
   }, []);
 
+  const getSmartThumbnail = useCallback(
+    (item) => {
+      if (!item || !item.url)
+        return "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800";
+
+      if (item.thumbnail && !item.thumbnail.includes("microlink")) {
+        return resolveAssetProtocol(item.thumbnail);
+      }
+
+      const url = item.url;
+      const lowUrl = url.toLowerCase();
+
+      if (lowUrl.includes("youtube.com") || lowUrl.includes("youtu.be")) {
+        const vId = lowUrl.includes("youtu.be")
+          ? url.split("youtu.be/")[1]?.split("?")[0]
+          : new URL(url).searchParams.get("v");
+
+        return vId ? `https://img.youtube.com/vi/${vId}/hqdefault.jpg` : "";
+      }
+
+      if (lowUrl.match(/\.(jpeg|jpg|png|webp|avif)$/))
+        return resolveAssetProtocol(url);
+
+      return `https://image.thum.io/get/width/800/crop/600/${url}`;
+    },
+    [resolveAssetProtocol],
+  );
+
+  // Execute deep scan supports 'Enter' key now
   const executeDeepScan = useCallback(async () => {
-    if (!ytInput)
+    if (!ytInput.trim())
       return pushNotification("URL required for ingestion.", "error");
     try {
       setIsYtProcessing(true);
@@ -407,6 +416,13 @@ const Items = () => {
       setIsYtProcessing(false);
     }
   }, [ytInput, handleGetCreateSave, pushNotification]);
+
+  const handleYtKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      executeDeepScan();
+    }
+  };
 
   const handleRecall = useCallback(
     async (id) => {
@@ -431,7 +447,7 @@ const Items = () => {
       const url = `${window.location.origin}/share/${item.shareId || item._id}`;
       try {
         await navigator.clipboard.writeText(url);
-        setCopiedId(item._id);
+        setCopiedId(item._id); // Show success feedback
         pushNotification("Link copied to clipboard.", "success");
         setTimeout(() => setCopiedId(null), 2000);
       } catch (err) {
@@ -440,6 +456,33 @@ const Items = () => {
     },
     [pushNotification],
   );
+
+  // 🔥 FAST OPTIMISTIC PINNING IMPLEMENTED HERE
+  const handleOptimisticPin = async (item) => {
+    const currentPinned =
+      localPins[item._id] !== undefined ? localPins[item._id] : item.isPinned;
+
+    // Immediate UI update
+    setLocalPins((prev) => ({ ...prev, [item._id]: !currentPinned }));
+    if (focusedNode && focusedNode._id === item._id) {
+      setFocusedNode((prev) =>
+        prev ? { ...prev, isPinned: !currentPinned } : null,
+      );
+    }
+
+    try {
+      await handleTogglePin(item._id);
+    } catch (error) {
+      // Revert if failed
+      setLocalPins((prev) => ({ ...prev, [item._id]: currentPinned }));
+      if (focusedNode && focusedNode._id === item._id) {
+        setFocusedNode((prev) =>
+          prev ? { ...prev, isPinned: currentPinned } : null,
+        );
+      }
+      pushNotification("Failed to pin item.", "error");
+    }
+  };
 
   const captureNeuralFragment = useCallback((e, itemId) => {
     setTimeout(() => {
@@ -459,31 +502,41 @@ const Items = () => {
     }, 0);
   }, []);
 
+  // 🔥 NULL CHECK CRASH FIX APPLIED HERE 🔥
   const persistHighlight = useCallback(
     async (e) => {
       e.preventDefault();
       e.stopPropagation();
+
       if (!highlightBuffer.itemId || !highlightBuffer.text) return;
+
+      // Hide popup instantly
+      setHighlightBuffer((prev) => ({ ...prev, visible: false }));
+
       try {
         await addHighlightAPI(highlightBuffer.itemId, highlightBuffer.text);
-        if (focusedNode?._id === highlightBuffer.itemId) {
-          setFocusedNode((prev) => ({
+
+        setFocusedNode((prev) => {
+          if (!prev) return null; // Prevents crash if modal was closed before promise resolves
+          return {
             ...prev,
             highlights: [
               ...(prev.highlights || []),
               { text: highlightBuffer.text, createdAt: new Date() },
             ],
-          }));
-        }
-        setHighlightBuffer((prev) => ({ ...prev, visible: false }));
-        window.getSelection().removeAllRanges();
+          };
+        });
+
+        // Safely deselect
+        window.getSelection()?.removeAllRanges();
+
         await handleGetCreateSave();
         pushNotification("Synapse fragment indexed.", "success");
       } catch (err) {
         pushNotification("Indexing failed.", "error");
       }
     },
-    [highlightBuffer, focusedNode, handleGetCreateSave, pushNotification],
+    [highlightBuffer, handleGetCreateSave, pushNotification],
   );
 
   const cognitivePool = useMemo(() => {
@@ -499,8 +552,23 @@ const Items = () => {
           : true;
         return tabMatch && searchMatch && catMatch;
       })
+      .map((item) => ({
+        ...item,
+        // Override with optimistic state if it exists
+        isPinned:
+          localPins[item._id] !== undefined
+            ? localPins[item._id]
+            : item.isPinned,
+      }))
       .sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
-  }, [saveItems, activeTab, searchQuery, activeCategory, classifyContentType]);
+  }, [
+    saveItems,
+    activeTab,
+    searchQuery,
+    activeCategory,
+    classifyContentType,
+    localPins,
+  ]);
 
   const categories = useMemo(() => {
     const catSet = new Set();
@@ -550,7 +618,7 @@ const Items = () => {
       }}
       className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all group relative z-[110] pointer-events-auto ${
         active
-          ? "bg-indigo-600/10 text-white border border-indigo-500/20"
+          ? "bg-indigo-600/15 text-white border border-indigo-500/30 shadow-[0_0_15px_rgba(79,70,229,0.2)]"
           : "text-slate-500 hover:bg-white/5 hover:text-slate-200"
       }`}
     >
@@ -599,7 +667,7 @@ const Items = () => {
             initial={{ opacity: 0, y: 50, x: "-50%" }}
             animate={{ opacity: 1, y: 0, x: "-50%" }}
             exit={{ opacity: 0, y: 20, x: "-50%" }}
-            className={`fixed bottom-10 left-1/2 z-[20000] px-8 py-4 rounded-2xl backdrop-blur-md border flex items-center gap-4 shadow-3xl ${
+            className={`fixed bottom-10 left-1/2 z-[20000] px-8 py-4 rounded-2xl backdrop-blur-xl border flex items-center gap-4 shadow-3xl ${
               notification.type === "error"
                 ? "bg-red-500/10 border-red-500/30 text-red-400"
                 : "bg-indigo-500/10 border-indigo-500/30 text-indigo-400"
@@ -626,7 +694,7 @@ const Items = () => {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             onMouseDown={persistHighlight}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-full text-[10px] font-black uppercase flex items-center gap-3 shadow-3xl border border-indigo-400"
+            className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-full text-[10px] font-black uppercase flex items-center gap-3 shadow-[0_0_20px_rgba(79,70,229,0.5)] border border-indigo-400 transition-all"
           >
             <Highlighter size={14} /> Index Synapse
           </motion.button>
@@ -649,11 +717,11 @@ const Items = () => {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 left-0 z-[160] w-80 bg-[#09090b] border-r border-white/5 p-8 flex flex-col lg:hidden"
+              className="fixed inset-y-0 left-0 z-[160] w-80 bg-[#09090b]/95 backdrop-blur-2xl border-r border-white/5 p-8 flex flex-col lg:hidden"
             >
               <div className="flex items-center justify-between mb-10">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                  <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(79,70,229,0.4)]">
                     <BrainCircuit className="text-white" size={22} />
                   </div>
                   <span className="text-xl font-black text-white italic uppercase">
@@ -662,7 +730,7 @@ const Items = () => {
                 </div>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 text-slate-500"
+                  className="p-2 text-slate-500 hover:text-white transition-colors"
                 >
                   <X size={24} />
                 </button>
@@ -704,7 +772,7 @@ const Items = () => {
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-4 px-4 py-3 text-red-400 font-black uppercase text-[10px] tracking-widest"
+                  className="w-full flex items-center gap-4 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-2xl transition-all font-black uppercase text-[10px] tracking-widest"
                 >
                   <LogOut size={18} /> Sign Out
                 </button>
@@ -723,7 +791,7 @@ const Items = () => {
         <div className="p-8 flex items-center justify-between shrink-0">
           {!isSidebarCollapsed && (
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(79,70,229,0.4)]">
                 <BrainCircuit className="text-white" size={22} />
               </div>
               <span className="text-xl font-black text-white italic tracking-tighter uppercase">
@@ -733,7 +801,7 @@ const Items = () => {
           )}
           <button
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="p-2 hover:bg-white/5 rounded-xl text-slate-500 relative z-[130] pointer-events-auto"
+            className="p-2 hover:bg-white/10 rounded-xl text-slate-400 hover:text-white transition-all relative z-[130] pointer-events-auto"
           >
             <PanelLeft size={20} />
           </button>
@@ -757,7 +825,7 @@ const Items = () => {
                   <p className="text-[11px] font-black text-white truncate uppercase tracking-tighter">
                     {user.name}
                   </p>
-                  <p className="text-[9px] text-slate-500 truncate">
+                  <p className="text-[9px] text-slate-400 truncate">
                     {user.email}
                   </p>
                 </div>
@@ -776,7 +844,7 @@ const Items = () => {
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 text-red-400 hover:bg-red-400/10 rounded-xl transition-all relative z-[130] pointer-events-auto"
+                className="p-2 text-red-400 hover:bg-red-400/10 hover:text-red-300 rounded-xl transition-all relative z-[130] pointer-events-auto"
               >
                 <LogOut size={20} />
               </button>
@@ -785,44 +853,64 @@ const Items = () => {
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col relative z-10 overflow-y-auto bg-[radial-gradient(ellipse_at_top,_#1e1b4b_0%,_transparent_50%)]">
-        <header className="h-20 lg:h-24 flex items-center justify-between px-6 lg:px-10 border-b border-white/5 bg-black/20 backdrop-blur-xl shrink-0">
+      {/* Main Area: Scrollable Container */}
+      <main className="flex-1 flex flex-col relative z-10 overflow-y-auto custom-scrollbar bg-[radial-gradient(ellipse_at_top,_#1e1b4b_0%,_transparent_50%)]">
+        {/* 🔥 STICKY HEADER 🔥 */}
+        <header className="sticky top-0 z-[100] h-20 lg:h-24 flex items-center justify-between px-6 lg:px-10 border-b border-white/10 bg-[#010103]/70 backdrop-blur-2xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] shrink-0">
           <div className="flex items-center gap-4 flex-1">
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden p-2 text-slate-500"
+              className="lg:hidden p-2 text-slate-400 hover:text-white transition-colors"
             >
               <PanelLeft size={24} />
             </button>
             <div className="relative w-full max-w-lg lg:max-w-2xl group block">
               <Search
-                className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-indigo-400 transition-colors"
+                className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors"
                 size={20}
               />
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search synapses... (Ctrl + K)"
-                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-6 text-sm focus:outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-600"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 lg:py-4 pl-14 pr-12 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all placeholder:text-slate-500"
               />
-              <div className="absolute right-5 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-2 px-2 py-1 bg-white/5 rounded-md border border-white/10">
-                <Command size={12} className="text-slate-500" />
-                <span className="text-[10px] font-black text-slate-500">K</span>
+
+              {/* Real-time visual feedback for searching */}
+              <AnimatePresence>
+                {isSearching && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute right-12 top-1/2 -translate-y-1/2"
+                  >
+                    <Loader2
+                      className="animate-spin text-indigo-400"
+                      size={16}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-2 px-2 py-1 bg-black/40 rounded-md border border-white/10 shadow-inner">
+                <Command size={12} className="text-slate-400" />
+                <span className="text-[10px] font-black text-slate-400">K</span>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-3 lg:gap-6 ml-4">
-            <button className="p-3 bg-white/5 rounded-xl text-slate-500 border border-white/5">
+            <button className="p-3 bg-white/5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all border border-white/5 hidden sm:block">
               <History size={20} />
             </button>
             <div className="w-px h-8 bg-white/10 hidden sm:block" />
-            <div className="flex items-center gap-4 bg-white/5 px-4 py-2 rounded-2xl border border-white/10 group cursor-pointer hover:border-indigo-500/50 transition-all">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white border border-white/20">
+            <div className="flex items-center gap-4 bg-white/5 px-4 py-2.5 rounded-2xl border border-white/10 group cursor-pointer hover:border-indigo-500/40 hover:bg-white/10 transition-all">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white border border-white/20 shadow-[0_0_10px_rgba(79,70,229,0.3)]">
                 <Fingerprint size={18} />
               </div>
               <div className="hidden xl:block text-left">
-                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">
                   Status
                 </p>
                 <p className="text-xs font-bold text-white mt-1">Authorized</p>
@@ -831,18 +919,19 @@ const Items = () => {
           </div>
         </header>
 
-        <div className="flex-1 p-6 lg:p-10">
+        <div className="flex-1 p-6 lg:p-10 relative z-0">
           {/* HERO SECTION */}
-          <section className="bg-gradient-to-br from-indigo-900/20 to-transparent border border-white/10 rounded-[2.5rem] p-8 lg:p-12 mb-10 lg:mb-16 flex flex-col xl:flex-row items-center gap-8 lg:gap-12 relative overflow-hidden text-left">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[100px] -z-10 rounded-full" />
-            <div className="flex-1 space-y-4">
-              <div className="flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full w-fit">
+          <section className="bg-gradient-to-br from-indigo-900/30 to-black/40 border border-white/10 rounded-[2.5rem] p-8 lg:p-12 mb-10 lg:mb-16 flex flex-col xl:flex-row items-center gap-8 lg:gap-12 relative overflow-hidden text-left shadow-[0_0_40px_rgba(79,70,229,0.05)] backdrop-blur-xl">
+            <div className="absolute top-0 right-0 w-72 h-72 bg-indigo-500/15 blur-[120px] -z-10 rounded-full" />
+            <div className="absolute bottom-0 left-20 w-64 h-64 bg-purple-500/10 blur-[100px] -z-10 rounded-full" />
+            <div className="flex-1 space-y-4 z-10">
+              <div className="flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full w-fit shadow-[0_0_10px_rgba(59,130,246,0.1)]">
                 <Zap size={12} className="text-blue-400" />
                 <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">
                   Accelerator Active
                 </span>
               </div>
-              <h2 className="text-3xl lg:text-4xl font-black text-white italic uppercase leading-none tracking-tighter">
+              <h2 className="text-3xl lg:text-4xl font-black text-white italic uppercase leading-none tracking-tighter drop-shadow-md">
                 Deep Ingestion
               </h2>
               <p className="text-slate-400 text-sm max-w-lg leading-relaxed">
@@ -850,22 +939,23 @@ const Items = () => {
                 into cognitive persistent summaries.
               </p>
             </div>
-            <div className="flex-1 w-full flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 w-full flex flex-col sm:flex-row gap-4 z-10">
               <div className="relative flex-1 group">
-                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600 group-hover:text-red-500 transition-colors">
+                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-hover:text-red-500 transition-colors">
                   <Globe size={20} />
                 </div>
                 <input
                   value={ytInput}
                   onChange={(e) => setYtInput(e.target.value)}
-                  placeholder="PASTE_LINK_HERE..."
-                  className="w-full bg-black/60 border border-white/10 rounded-3xl py-5 lg:py-6 pl-16 pr-8 text-xs font-black tracking-widest text-white outline-none focus:border-red-500/40 transition-all"
+                  onKeyDown={handleYtKeyDown}
+                  placeholder="PASTE_LINK_HERE... (Press Enter)"
+                  className="w-full bg-black/60 border border-white/10 rounded-3xl py-5 lg:py-6 pl-16 pr-8 text-xs font-black tracking-widest text-white outline-none focus:border-red-500/50 focus:bg-black/80 transition-all placeholder:text-slate-600 shadow-inner"
                 />
               </div>
               <button
                 onClick={executeDeepScan}
-                disabled={isYtProcessing}
-                className="px-10 py-5 lg:py-6 bg-red-600 hover:bg-red-500 text-white rounded-3xl font-black uppercase text-[11px] tracking-[0.3em] transition-all shadow-2xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
+                disabled={isYtProcessing || !ytInput.trim()}
+                className="px-10 py-5 lg:py-6 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white rounded-3xl font-black uppercase text-[11px] tracking-[0.3em] transition-all shadow-[0_0_20px_rgba(239,68,68,0.4)] hover:shadow-[0_0_30px_rgba(239,68,68,0.6)] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
               >
                 {isYtProcessing ? (
                   <Loader2 className="animate-spin" size={20} />
@@ -880,23 +970,26 @@ const Items = () => {
           {/* CONTROLS */}
           <div className="flex flex-col gap-10 mb-12 lg:mb-16 border-b border-white/5 pb-10">
             <div className="flex flex-wrap items-center justify-between gap-8">
-              <div className="flex gap-2 lg:gap-3 bg-white/5 p-1.5 lg:p-2 rounded-2xl border border-white/5 overflow-x-auto no-scrollbar">
+              <div className="flex gap-2 lg:gap-3 bg-white/5 p-1.5 lg:p-2 rounded-2xl border border-white/5 overflow-x-auto custom-scrollbar-horizontal">
                 {navigationTabs.map((t) => (
                   <button
                     key={t.id}
                     onClick={() => setActiveTab(t.id)}
                     className={`flex items-center gap-3 px-5 lg:px-6 py-2.5 lg:py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
                       activeTab === t.id
-                        ? "bg-white text-black shadow-3xl scale-105"
-                        : "text-slate-500 hover:text-slate-200"
+                        ? "bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.4)] scale-105"
+                        : "text-slate-400 hover:text-white hover:bg-white/5"
                     }`}
                   >
                     {t.icon} {t.label}
                   </button>
                 ))}
               </div>
-              <div className="hidden lg:flex items-center gap-4 bg-indigo-500/10 px-6 py-3 rounded-full border border-indigo-500/20 shadow-xl">
-                <History size={16} className="text-indigo-400" />
+              <div className="hidden lg:flex items-center gap-4 bg-indigo-500/10 px-6 py-3 rounded-full border border-indigo-500/30 shadow-[0_0_15px_rgba(79,70,229,0.15)] cursor-default">
+                <History
+                  size={16}
+                  className="text-indigo-400 animate-spin-slow"
+                />
                 <span className="text-[10px] font-black uppercase text-indigo-300 tracking-widest">
                   Resurfacing Pipeline Sync
                 </span>
@@ -904,7 +997,7 @@ const Items = () => {
             </div>
 
             <div className="flex flex-wrap gap-4 items-center">
-              <div className="flex items-center gap-2 px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-full">
                 <Filter size={12} className="text-indigo-400" />
                 <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400">
                   Clusters
@@ -914,8 +1007,8 @@ const Items = () => {
                 onClick={() => setActiveCategory("")}
                 className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase border transition-all ${
                   !activeCategory
-                    ? "bg-white text-black border-white shadow-xl"
-                    : "bg-white/5 border-white/5 text-gray-500 hover:text-white"
+                    ? "bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)] scale-105"
+                    : "bg-white/5 border-white/5 text-slate-400 hover:text-white hover:bg-white/10"
                 }`}
               >
                 Spectrum
@@ -926,8 +1019,8 @@ const Items = () => {
                   onClick={() => setActiveCategory(cat)}
                   className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase border transition-all whitespace-nowrap ${
                     activeCategory === cat
-                      ? "bg-indigo-600 text-white border-indigo-500 shadow-xl"
-                      : "bg-white/5 border-white/5 text-gray-500 hover:text-white"
+                      ? "bg-indigo-600 text-white border-indigo-500 shadow-[0_0_15px_rgba(79,70,229,0.4)] scale-105"
+                      : "bg-white/5 border-white/5 text-slate-400 hover:text-white hover:bg-white/10"
                   }`}
                 >
                   {cat}
@@ -944,28 +1037,28 @@ const Items = () => {
             >
               <div className="flex items-center gap-4 mb-8">
                 <Sparkles className="text-indigo-400 animate-pulse" size={24} />
-                <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter">
+                <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter drop-shadow-md">
                   Memory Resurfacing
                 </h2>
-                <div className="flex-1 h-px bg-gradient-to-r from-indigo-500/50 to-transparent" />
+                <div className="flex-1 h-px bg-gradient-to-r from-indigo-500/50 via-indigo-500/10 to-transparent" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                 {memoryFlashes.map((node) => (
                   <motion.div
                     key={node._id}
-                    whileHover={{ scale: 1.03, rotate: -1 }}
+                    whileHover={{ scale: 1.03, y: -5 }}
                     onClick={() => {
                       setFocusedNode(node);
                       discoverRelativity(node._id);
                     }}
-                    className="relative group bg-indigo-600/[0.04] border border-indigo-500/20 p-8 rounded-[2.5rem] cursor-pointer transition-all flex items-center justify-between shadow-[0_0_40px_rgba(79,70,229,0.1)] backdrop-blur-md overflow-hidden"
+                    className="relative group bg-indigo-600/[0.04] border border-indigo-500/20 p-8 rounded-[2.5rem] cursor-pointer transition-all flex items-center justify-between shadow-[0_0_40px_rgba(79,70,229,0.05)] hover:shadow-[0_15px_40px_rgba(79,70,229,0.15)] hover:border-indigo-500/40 backdrop-blur-xl overflow-hidden"
                   >
                     <div className="absolute inset-0 bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     <div className="absolute -right-10 -top-10 w-32 h-32 bg-indigo-500/10 blur-3xl group-hover:bg-indigo-500/20 transition-all" />
 
                     <div className="flex items-center gap-6 overflow-hidden relative z-10">
-                      <div className="p-4 bg-indigo-500/20 rounded-2xl group-hover:bg-indigo-500 transition-all duration-500 shrink-0 shadow-lg shadow-indigo-500/20">
+                      <div className="p-4 bg-indigo-500/20 rounded-2xl group-hover:bg-indigo-500 transition-all duration-500 shrink-0 shadow-[0_0_15px_rgba(79,70,229,0.2)]">
                         <Clock
                           size={22}
                           className="text-indigo-400 group-hover:text-white"
@@ -976,10 +1069,10 @@ const Items = () => {
                           {node.title || "Restoring Synapse..."}
                         </span>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[9px] text-indigo-500 font-bold uppercase tracking-[0.3em]">
+                          <span className="text-[9px] text-indigo-400 font-bold uppercase tracking-[0.3em]">
                             Synapse Recall
                           </span>
-                          <div className="w-1 h-1 rounded-full bg-indigo-500 animate-ping" />
+                          <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping shadow-[0_0_5px_#6366f1]" />
                         </div>
                       </div>
                     </div>
@@ -995,33 +1088,39 @@ const Items = () => {
 
           {/* GRID VIEW */}
           {cognitivePool.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 gap-10 pb-20">
-              <AnimatePresence mode="popLayout">
-                {cognitivePool.map((item) => (
-                  <NodeCard
-                    key={item._id}
-                    item={item}
-                    autoTags={getAutoTags(item)}
-                    onFocus={() => {
-                      setFocusedNode(item);
-                      discoverRelativity(item._id);
-                    }}
-                    onPin={() => handleTogglePin(item._id)}
-                    onShare={() => handleShare(item)}
-                    getThumb={getSmartThumbnail}
-                    classify={classifyContentType}
-                    contentIcon={<ContentIcon url={item.url} />}
-                  />
-                ))}
-              </AnimatePresence>
-            </div>
+            <LayoutGroup>
+              <motion.div
+                layout
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 gap-10 pb-20"
+              >
+                <AnimatePresence mode="popLayout">
+                  {cognitivePool.map((item) => (
+                    <NodeCard
+                      key={item._id}
+                      item={item}
+                      autoTags={getAutoTags(item)}
+                      onFocus={() => {
+                        setFocusedNode(item);
+                        discoverRelativity(item._id);
+                      }}
+                      onPin={handleOptimisticPin}
+                      onShare={handleShare}
+                      getThumb={getSmartThumbnail}
+                      classify={classifyContentType}
+                      contentIcon={<ContentIcon url={item.url} />}
+                      isCopied={copiedId === item._id} // Pass specific item status
+                    />
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+            </LayoutGroup>
           ) : (
-            <div className="flex flex-col items-center justify-center py-60 opacity-30 text-center">
-              <Unplug size={80} className="mb-8" />
-              <h3 className="text-5xl font-black uppercase tracking-tighter italic">
+            <div className="flex flex-col items-center justify-center py-40 lg:py-60 opacity-40 text-center">
+              <Unplug size={80} className="mb-8 text-slate-500" />
+              <h3 className="text-4xl lg:text-5xl font-black uppercase tracking-tighter italic text-white drop-shadow-lg">
                 Sector Offline
               </h3>
-              <p className="text-xs font-black uppercase tracking-[0.5em] mt-4">
+              <p className="text-[10px] lg:text-xs font-black uppercase tracking-[0.4em] lg:tracking-[0.5em] mt-4 text-slate-400">
                 System awaiting cognitive synchronization
               </p>
             </div>
@@ -1048,7 +1147,7 @@ const Items = () => {
                 setFocusedNode(null);
               }
             }}
-            onTogglePin={() => handleTogglePin(focusedNode._id)}
+            onTogglePin={() => handleOptimisticPin(focusedNode)}
             related={relatedNodes[focusedNode._id] || []}
             setNode={setFocusedNode}
             discover={discoverRelativity}
@@ -1066,14 +1165,26 @@ const Items = () => {
         )}
       </AnimatePresence>
 
+      {/* Global & Scrollbar Styling */}
       <style>{`
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    @keyframes loading { 0% { transform: translateX(-250%); } 100% { transform: translateX(450%); } }
-    .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 1); }
-    .animate-in { animation: fadeIn 0.5s ease-out forwards; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  `}</style>
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.6); }
+
+        .custom-scrollbar-horizontal::-webkit-scrollbar { height: 4px; }
+        .custom-scrollbar-horizontal::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar-horizontal::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        @keyframes loading { 0% { transform: translateX(-250%); } 100% { transform: translateX(450%); } }
+        .shadow-3xl { box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 1); }
+        .animate-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-spin-slow { animation: spin 4s linear infinite; }
+      `}</style>
     </div>
   );
 };
@@ -1100,117 +1211,122 @@ const NodeExpansionModal = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[1000] flex items-center justify-center p-4 lg:p-12 bg-black/98 backdrop-blur-md overflow-hidden pointer-events-auto"
+      className="fixed inset-0 z-[5000] flex items-center justify-center p-4 lg:p-12 bg-black/95 backdrop-blur-xl overflow-hidden pointer-events-auto"
     >
       <div className="absolute inset-0 z-0" onClick={onClose} />
       <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        initial={{ opacity: 0, scale: 0.95, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+        exit={{ opacity: 0, scale: 0.95, y: 30 }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative z-10 w-full max-w-7xl h-[85vh] md:h-[80vh] lg:h-[85vh] flex flex-col md:flex-row bg-[#0c0c0e] border border-white/10 rounded-[2rem] lg:rounded-[3rem] shadow-3xl overflow-hidden pointer-events-auto"
+        className="relative z-10 w-full max-w-7xl h-[85vh] md:h-[80vh] lg:h-[85vh] flex flex-col md:flex-row bg-[#0a0a0c] border border-white/10 rounded-[2rem] lg:rounded-[3rem] shadow-[0_0_80px_rgba(0,0,0,0.8)] overflow-hidden pointer-events-auto"
       >
-        <div className="w-full md:w-[45%] h-[250px] md:h-full relative overflow-hidden bg-black border-r border-white/5 shrink-0">
+        <div className="w-full md:w-[45%] h-[250px] md:h-full relative overflow-hidden bg-black border-r border-white/5 shrink-0 group">
           <img
             decoding="async"
             src={getThumb(node)}
             loading="lazy"
-            className="w-full h-full object-cover opacity-60"
+            className="w-full h-full object-cover opacity-50 group-hover:opacity-70 group-hover:scale-105 transition-all duration-700"
             alt={node.title || "Focus"}
             onError={(e) => {
               e.target.onerror = null;
-              // 🔥 FALLBACK FIX IN MODAL TOO
               e.target.src = `https://image.thum.io/get/width/800/crop/600/${node.url}`;
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0e] via-transparent to-transparent" />
-          <div className="absolute bottom-10 left-10 right-10 z-20 space-y-6 text-left">
-            <h2 className="text-3xl lg:text-5xl font-black text-white tracking-tighter uppercase italic leading-tight">
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0c] via-black/40 to-transparent" />
+          <div className="absolute bottom-10 left-8 right-8 lg:left-12 lg:right-12 z-20 space-y-6 text-left">
+            <h2 className="text-3xl lg:text-5xl font-black text-white tracking-tighter uppercase italic leading-tight drop-shadow-xl">
               {node.title || "Untitled"}
             </h2>
             <div className="flex flex-wrap gap-4">
-              <div className="bg-white/5 px-4 py-2 rounded-full border border-white/10 flex items-center gap-3 text-xs font-bold text-slate-400 uppercase tracking-widest">
+              <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 flex items-center gap-3 text-[10px] lg:text-xs font-bold text-slate-200 uppercase tracking-widest shadow-lg">
                 <Globe size={14} /> {classify(node.url)} Node
               </div>
-              <div className="bg-indigo-500/10 px-4 py-2 rounded-full border border-indigo-500/20 flex items-center gap-3 text-xs font-bold text-indigo-400 uppercase tracking-widest">
+              <div className="bg-indigo-600/20 backdrop-blur-md px-4 py-2 rounded-full border border-indigo-500/30 flex items-center gap-3 text-[10px] lg:text-xs font-bold text-indigo-300 uppercase tracking-widest shadow-[0_0_15px_rgba(79,70,229,0.3)]">
                 <Tag size={14} /> {node.category || "General Intel"}
               </div>
             </div>
             <div className="flex flex-wrap gap-4 pt-6">
               <button
                 onClick={() => window.open(node.url, "_blank")}
-                className="px-8 lg:px-10 py-4 lg:py-5 bg-white text-black rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-indigo-500 hover:text-white transition-all shadow-3xl flex items-center gap-3"
+                className="px-8 lg:px-10 py-4 lg:py-4 bg-white text-black rounded-full font-black uppercase text-xs tracking-widest hover:bg-indigo-600 hover:text-white hover:shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all shadow-xl flex items-center gap-3 active:scale-95"
               >
                 Launch <ExternalLink size={18} />
               </button>
               <button
                 onClick={onRecall}
-                className="px-8 lg:px-10 py-4 lg:py-5 bg-indigo-600/20 border border-indigo-500/40 text-indigo-400 rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-3 shadow-2xl active:scale-95"
+                className="px-8 lg:px-10 py-4 lg:py-4 bg-indigo-600/10 border border-indigo-500/30 text-indigo-400 rounded-full font-black uppercase text-xs tracking-widest hover:bg-indigo-600 hover:text-white hover:border-indigo-500 hover:shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all flex items-center gap-3 shadow-lg active:scale-95"
               >
                 <Target size={18} /> Recall
               </button>
             </div>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto h-full max-h-full min-h-0 no-scrollbar p-6 md:p-8 lg:p-12 space-y-10 bg-[#0c0c0e] relative text-left">
+        <div className="flex-1 overflow-y-auto h-full max-h-full min-h-0 custom-scrollbar p-6 md:p-8 lg:p-12 space-y-12 bg-[#0a0a0c] relative text-left">
           <button
             onClick={onClose}
-            className="absolute top-8 right-8 lg:top-12 lg:right-12 p-3 lg:p-6 bg-white/5 rounded-full hover:bg-red-500 transition-all border border-white/5 hover:rotate-90 z-20"
+            className="absolute top-6 right-6 lg:top-8 lg:right-8 p-3 lg:p-4 bg-white/5 rounded-full hover:bg-red-500/80 hover:shadow-[0_0_20px_rgba(239,68,68,0.5)] transition-all border border-white/10 hover:border-red-500 hover:rotate-90 z-20"
           >
-            <X size={28} />
+            <X size={24} className="text-slate-300 hover:text-white" />
           </button>
 
-          <section className="animate-in">
-            <div className="flex items-center gap-6 mb-10 opacity-60">
-              <Sparkles size={24} className="text-indigo-400" />
-              <h3 className="text-xl font-black uppercase tracking-[0.6em] text-white italic text-left">
+          <section className="animate-in pt-4 lg:pt-0">
+            <div className="flex items-center gap-6 mb-8 opacity-70">
+              <Sparkles
+                size={24}
+                className="text-indigo-400 drop-shadow-[0_0_10px_rgba(79,70,229,0.5)]"
+              />
+              <h3 className="text-lg lg:text-xl font-black uppercase tracking-[0.5em] lg:tracking-[0.6em] text-white italic text-left">
                 Neural Synthesis
               </h3>
-              <div className="h-px flex-grow bg-white/5" />
+              <div className="h-px flex-grow bg-gradient-to-r from-white/10 to-transparent" />
             </div>
-            <div className="p-8 lg:p-14 bg-white/[0.01] border border-white/5 rounded-[3rem] lg:rounded-[4rem] border-l-[16px] border-l-indigo-600 relative shadow-inner">
+            <div className="p-8 lg:p-12 bg-white/[0.02] border border-white/5 rounded-[2rem] lg:rounded-[3rem] border-l-[8px] lg:border-l-[12px] border-l-indigo-600 relative shadow-inner">
               <Fingerprint
-                size={60}
-                className="absolute top-10 right-12 text-indigo-500 opacity-5 animate-pulse"
+                size={80}
+                className="absolute top-1/2 -translate-y-1/2 right-10 text-indigo-500 opacity-[0.03] pointer-events-none"
               />
               <p
                 onMouseUp={(e) => onHighlight(e, node._id)}
                 onTouchEnd={(e) => onHighlight(e, node._id)}
-                className="text-base md:text-lg lg:text-xl text-slate-300 italic leading-relaxed break-words whitespace-pre-wrap font-medium selection:bg-indigo-600 selection:text-white transition-all text-left"
+                className="text-base md:text-lg lg:text-xl text-slate-300 italic leading-relaxed break-words whitespace-pre-wrap font-medium selection:bg-indigo-500 selection:text-white transition-all text-left relative z-10"
               >
                 {node.note || "Awaiting intelligence synthesis..."}
               </p>
-              <div className="mt-12 flex items-center gap-4 text-[10px] font-black uppercase text-slate-700 tracking-[0.5em]">
-                <BoxSelect size={18} /> Drag text to segment thought
+              <div className="mt-10 pt-6 border-t border-white/5 flex items-center gap-4 text-[9px] lg:text-[10px] font-black uppercase text-slate-600 tracking-[0.4em] lg:tracking-[0.5em]">
+                <BoxSelect size={16} /> Drag text to index synapse fragment
               </div>
             </div>
           </section>
 
           {node.highlights?.length > 0 && (
             <section className="animate-in">
-              <div className="flex items-center gap-6 mb-10 opacity-60">
-                <Highlighter size={24} className="text-yellow-500" />
-                <h3 className="text-xl font-black uppercase tracking-[0.6em] text-white italic">
+              <div className="flex items-center gap-6 mb-8 opacity-70">
+                <Highlighter
+                  size={24}
+                  className="text-yellow-500 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]"
+                />
+                <h3 className="text-lg lg:text-xl font-black uppercase tracking-[0.5em] lg:tracking-[0.6em] text-white italic">
                   Indexed Synapses
                 </h3>
               </div>
-              <div className="grid gap-8">
+              <div className="grid gap-6">
                 {node.highlights.map((h, i) => (
                   <div
                     key={i}
-                    className="p-8 lg:p-10 bg-yellow-500/[0.02] border border-yellow-500/10 rounded-[3rem] relative hover:border-yellow-500/30 transition-all shadow-xl text-left"
+                    className="p-8 lg:p-10 bg-yellow-500/[0.03] border border-yellow-500/10 rounded-[2rem] relative hover:border-yellow-500/30 hover:bg-yellow-500/[0.05] transition-all shadow-lg text-left group"
                   >
                     <Bookmark
                       size={24}
-                      className="absolute top-10 right-12 text-yellow-600 opacity-20"
+                      className="absolute top-10 right-10 text-yellow-600 opacity-20 group-hover:opacity-60 transition-opacity"
                     />
-                    <p className="text-lg lg:text-2xl text-yellow-100/70 italic leading-relaxed">
+                    <p className="text-lg lg:text-xl text-yellow-100/80 italic leading-relaxed font-medium pr-8">
                       "{h.text}"
                     </p>
-                    <div className="mt-8 flex items-center gap-4 opacity-40">
-                      <div className="w-10 h-px bg-yellow-950" />
-                      <span className="text-[10px] font-black tracking-[0.3em] uppercase tracking-widest italic">
+                    <div className="mt-6 flex items-center gap-4 opacity-40 group-hover:opacity-80 transition-opacity">
+                      <div className="w-8 h-px bg-yellow-500/50" />
+                      <span className="text-[9px] lg:text-[10px] font-black tracking-[0.3em] uppercase text-yellow-600 italic">
                         Hash 0x{(node._id || "0000").slice(-4)}_FRG_{i}
                       </span>
                     </div>
@@ -1221,14 +1337,17 @@ const NodeExpansionModal = ({
           )}
 
           {related.length > 0 && (
-            <section className="pt-20 border-t border-white/5 text-left">
-              <div className="flex items-center gap-6 mb-12 opacity-60 text-left">
-                <Network size={24} className="text-purple-400" />
-                <h3 className="text-xl font-black uppercase tracking-[0.6em] text-white italic">
-                  Semantic Relative Pathways
+            <section className="pt-16 border-t border-white/5 text-left">
+              <div className="flex items-center gap-6 mb-10 opacity-70 text-left">
+                <Network
+                  size={24}
+                  className="text-purple-400 drop-shadow-[0_0_10px_rgba(192,132,252,0.5)]"
+                />
+                <h3 className="text-lg lg:text-xl font-black uppercase tracking-[0.5em] lg:tracking-[0.6em] text-white italic">
+                  Relative Pathways
                 </h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 {related.slice(0, 4).map((rec, i) => (
                   <div
                     key={i}
@@ -1236,14 +1355,14 @@ const NodeExpansionModal = ({
                       setNode(rec);
                       discover(rec._id);
                     }}
-                    className="p-8 lg:p-10 bg-white/[0.02] rounded-[3rem] border border-white/5 hover:border-indigo-500/30 transition-all cursor-pointer group flex items-center justify-between shadow-lg"
+                    className="p-6 lg:p-8 bg-white/[0.02] rounded-[2rem] border border-white/5 hover:border-indigo-500/30 hover:bg-white/[0.04] transition-all cursor-pointer group flex items-center justify-between shadow-md hover:shadow-[0_0_20px_rgba(79,70,229,0.1)]"
                   >
-                    <span className="text-sm font-black text-slate-400 group-hover:text-white uppercase tracking-[0.3em] truncate pr-6 italic">
+                    <span className="text-xs lg:text-sm font-black text-slate-400 group-hover:text-white uppercase tracking-[0.2em] lg:tracking-[0.3em] truncate pr-6 italic transition-colors">
                       {rec.title || "Related Intelligence"}
                     </span>
                     <ChevronRight
-                      size={28}
-                      className="text-slate-800 group-hover:text-indigo-400"
+                      size={24}
+                      className="text-slate-700 group-hover:text-indigo-400 transition-colors"
                     />
                   </div>
                 ))}
@@ -1251,37 +1370,41 @@ const NodeExpansionModal = ({
             </section>
           )}
 
-          <div className="pt-24 border-t border-white/5 flex flex-wrap items-center justify-between gap-10">
-            <div className="flex gap-12 text-left">
-              <div className="space-y-3 text-left">
-                <span className="text-[10px] font-black text-slate-700 uppercase tracking-[0.4em]">
+          <div className="pt-16 pb-8 border-t border-white/5 flex flex-wrap items-center justify-between gap-8">
+            <div className="flex flex-wrap gap-8 lg:gap-12 text-left">
+              <div className="space-y-2 lg:space-y-3 text-left">
+                <span className="text-[9px] lg:text-[10px] font-black text-slate-600 uppercase tracking-[0.4em]">
                   Establish Date
                 </span>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                <p className="text-[10px] lg:text-xs font-bold text-slate-300 uppercase tracking-widest">
                   {node.createdAt
                     ? new Date(node.createdAt).toLocaleString()
-                    : "Unknown"}
+                    : "Unknown Axis"}
                 </p>
               </div>
-              <div className="space-y-3 text-left">
-                <span className="text-[10px] font-black text-slate-700 uppercase tracking-[0.4em]">
+              <div className="space-y-2 lg:space-y-3 text-left">
+                <span className="text-[9px] lg:text-[10px] font-black text-slate-600 uppercase tracking-[0.4em]">
                   Node Sector
                 </span>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                <p className="text-[10px] lg:text-xs font-bold text-slate-300 uppercase tracking-widest">
                   {node.collection || "UNIVERSE_ROOT"}
                 </p>
               </div>
             </div>
-            <div className="flex flex-wrap gap-6">
+            <div className="flex flex-wrap gap-4 lg:gap-6 w-full sm:w-auto">
               <button
                 onClick={onTogglePin}
-                className={`px-8 lg:px-10 py-4 lg:py-5 rounded-3xl text-[10px] font-black uppercase tracking-[0.4em] border transition-all ${node.isPinned ? "bg-orange-500/20 border-orange-500/40 text-orange-400 shadow-xl" : "bg-white/5 border-white/10 text-slate-500 hover:text-white"}`}
+                className={`flex-1 sm:flex-none px-6 lg:px-8 py-4 lg:py-4 rounded-full text-[9px] lg:text-[10px] font-black uppercase tracking-[0.3em] border transition-all active:scale-95 ${
+                  node.isPinned
+                    ? "bg-orange-500/20 border-orange-500/40 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.2)]"
+                    : "bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10"
+                }`}
               >
                 {node.isPinned ? "Unlock Node" : "Pin Synapse"}
               </button>
               <button
                 onClick={onDelete}
-                className="px-8 lg:px-10 py-4 lg:py-5 bg-red-600/10 text-red-500 rounded-3xl text-[10px] font-black uppercase tracking-[0.4em] border border-red-500/20 hover:bg-red-600 hover:text-white transition-all shadow-3xl"
+                className="flex-1 sm:flex-none px-6 lg:px-8 py-4 lg:py-4 bg-red-500/10 text-red-500 rounded-full text-[9px] lg:text-[10px] font-black uppercase tracking-[0.3em] border border-red-500/20 hover:bg-red-600 hover:text-white hover:border-red-600 hover:shadow-[0_0_20px_rgba(239,68,68,0.5)] transition-all active:scale-95"
               >
                 Purge Link
               </button>
@@ -1298,49 +1421,55 @@ const RecallSystemModal = ({ isLoading, deck, onClose }) => (
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    className="fixed inset-0 z-[5000] flex items-center justify-center p-6 lg:p-12 bg-black/99 backdrop-blur-[150px] overflow-y-auto pointer-events-auto"
+    className="fixed inset-0 z-[6000] flex items-center justify-center p-6 lg:p-12 bg-black/98 backdrop-blur-[100px] overflow-y-auto pointer-events-auto custom-scrollbar"
   >
     <div className="absolute inset-0 z-0" onClick={onClose} />
     <button
       onClick={onClose}
-      className="absolute top-10 right-10 p-4 lg:p-6 hover:bg-white/5 rounded-full border border-white/5 hover:rotate-90 transition-all z-20"
+      className="absolute top-6 right-6 lg:top-10 lg:right-10 p-4 lg:p-6 hover:bg-red-500/20 rounded-full border border-white/5 hover:border-red-500/50 hover:text-red-400 hover:rotate-90 transition-all z-20 text-slate-400"
     >
-      <X size={40} className="lg:hidden" />
-      <X size={60} className="hidden lg:block" />
+      <X size={30} className="lg:hidden" />
+      <X size={40} className="hidden lg:block" />
     </button>
     <div
       className="w-full max-w-5xl text-center flex flex-col items-center py-20 relative z-10"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="mb-20">
-        <div className="inline-block p-10 lg:p-14 bg-indigo-500/10 rounded-[8rem] border border-indigo-500/20 mb-12 shadow-3xl animate-in">
+      <div className="mb-16 lg:mb-20">
+        <div className="inline-block p-10 lg:p-14 bg-indigo-500/10 rounded-[4rem] lg:rounded-[6rem] border border-indigo-500/20 mb-8 lg:mb-12 shadow-[0_0_50px_rgba(79,70,229,0.2)] animate-in">
           <Brain
-            size={80}
-            className="lg:hidden text-indigo-400 animate-pulse"
+            size={60}
+            className="lg:hidden text-indigo-400 animate-pulse drop-shadow-[0_0_15px_rgba(79,70,229,0.8)]"
           />
           <Brain
-            size={120}
-            className="hidden lg:block text-indigo-400 animate-pulse"
+            size={100}
+            className="hidden lg:block text-indigo-400 animate-pulse drop-shadow-[0_0_20px_rgba(79,70,229,0.8)]"
           />
         </div>
-        <h2 className="text-4xl lg:text-9xl font-black text-white italic tracking-tighter uppercase leading-none">
+        <h2 className="text-4xl lg:text-8xl font-black text-white italic tracking-tighter uppercase leading-none drop-shadow-2xl">
           RECALL ACTIVE
         </h2>
-        <div className="mt-12 flex items-center gap-8 lg:gap-12 justify-center opacity-40">
-          <Cpu size={32} className="text-indigo-500" />
-          <span className="text-sm lg:text-xl font-black uppercase text-slate-500 tracking-[0.5em] lg:tracking-[1em] italic">
+        <div className="mt-8 lg:mt-12 flex items-center gap-6 lg:gap-10 justify-center opacity-60">
+          <Cpu
+            size={28}
+            className="text-indigo-400 drop-shadow-[0_0_10px_rgba(79,70,229,0.5)]"
+          />
+          <span className="text-xs lg:text-lg font-black uppercase text-slate-300 tracking-[0.5em] lg:tracking-[0.8em] italic">
             Cognitive Synthesis Mode
           </span>
         </div>
       </div>
-      <div className="w-full space-y-24 py-16">
+      <div className="w-full space-y-16 lg:space-y-24 py-10 lg:py-16">
         {isLoading ? (
-          <div className="flex flex-col items-center gap-12 py-32">
-            <Loader2 size={120} className="animate-spin text-indigo-500" />
-            <div className="w-72 lg:w-96 h-2 bg-white/5 rounded-full overflow-hidden shadow-inner">
-              <div className="w-full h-full bg-indigo-500 animate-[loading_4s_infinite]" />
+          <div className="flex flex-col items-center gap-8 lg:gap-12 py-20 lg:py-32">
+            <Loader2
+              size={80}
+              className="animate-spin text-indigo-500 drop-shadow-[0_0_20px_rgba(79,70,229,0.5)] lg:w-[120px] lg:h-[120px]"
+            />
+            <div className="w-64 lg:w-96 h-1.5 lg:h-2 bg-white/10 rounded-full overflow-hidden shadow-inner relative">
+              <div className="absolute inset-y-0 left-0 bg-indigo-500 w-1/3 rounded-full animate-[loading_2s_infinite_ease-in-out] shadow-[0_0_10px_rgba(79,70,229,0.8)]" />
             </div>
-            <span className="text-sm lg:text-lg font-black uppercase text-indigo-400 tracking-[0.5em] lg:tracking-[1em] animate-pulse">
+            <span className="text-xs lg:text-sm font-black uppercase text-indigo-400 tracking-[0.4em] lg:tracking-[0.8em] animate-pulse">
               Mapping Context...
             </span>
           </div>
@@ -1348,24 +1477,24 @@ const RecallSystemModal = ({ isLoading, deck, onClose }) => (
           deck.map((c, i) => (
             <div
               key={i}
-              className="transform hover:scale-[1.05] transition-all duration-1000"
+              className="transform hover:scale-[1.02] lg:hover:scale-[1.05] transition-transform duration-700"
             >
               <Flashcard question={c.q} answer={c.a} />
             </div>
           ))
         ) : (
-          <div className="text-slate-700 font-black uppercase text-2xl lg:text-4xl opacity-20 italic tracking-widest">
+          <div className="text-slate-600 font-black uppercase text-xl lg:text-3xl opacity-40 italic tracking-[0.3em] lg:tracking-widest py-20">
             Synthesis Blocked: Insufficient Data
           </div>
         )}
       </div>
       <button
         onClick={onClose}
-        className="mt-24 px-12 lg:px-32 py-6 lg:py-10 bg-white/5 border border-white/10 text-white rounded-[5rem] text-sm lg:text-xl font-black uppercase tracking-[0.3em] lg:tracking-[0.5em] hover:bg-indigo-600 transition-all shadow-3xl active:scale-95 flex items-center gap-6 lg:gap-10 group"
+        className="mt-16 lg:mt-24 px-10 lg:px-24 py-5 lg:py-8 bg-white/5 border border-white/10 text-slate-300 rounded-full text-xs lg:text-sm font-black uppercase tracking-[0.3em] lg:tracking-[0.5em] hover:bg-white hover:text-black hover:border-white transition-all shadow-2xl hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] active:scale-95 flex items-center gap-4 lg:gap-8 group"
       >
         <RefreshCcw
-          size={32}
-          className="group-hover:rotate-180 transition-transform duration-1000"
+          size={24}
+          className="group-hover:rotate-180 transition-transform duration-700 lg:w-[32px] lg:h-[32px]"
         />
         Terminate Protocol
       </button>
