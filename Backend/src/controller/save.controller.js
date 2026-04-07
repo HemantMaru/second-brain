@@ -142,6 +142,10 @@ export const saveItem = async (req, res) => {
     } catch (e) {
       thumbnail = "";
     }
+
+    if (!thumbnail) {
+      thumbnail = `https://image.thum.io/get/width/800/crop/600/${url}`;
+    }
     let type = "link";
     if (url.includes("youtube")) type = "youtube";
     else if (url.includes("instagram")) type = "instagram";

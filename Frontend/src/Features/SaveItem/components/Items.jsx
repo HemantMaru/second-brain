@@ -381,11 +381,9 @@ const Items = () => {
 
     if (lowUrl.match(/\.(jpeg|jpg|png|webp|avif)$/)) return url;
 
-    return `https://api.microlink.io/?url=${encodeURIComponent(
-      url,
-    )}&screenshot=true`;
+    // 🔥 FINAL FIX
+    return `https://image.thum.io/get/width/800/crop/600/${url}`;
   }, []);
-
   const resolveAssetProtocol = useCallback((url) => {
     if (!url) return "";
     return url.startsWith("http")
