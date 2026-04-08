@@ -402,12 +402,11 @@ ${message}
 
 // 8. PDF Processing (Ownership Added)
 // 8. PDF Processing (FIXED UPLOAD)
-// 8. PDF Processing (FIXED UPLOAD)
 export const savePdfItem = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No PDF found" });
 
-    // Convert buffer to Base64 for ImageKit
+    // 🔥 FIX: Convert buffer to Base64 for ImageKit
     const fileBase64 = req.file.buffer.toString("base64");
 
     const ikResponse = await imagekit.upload({
@@ -431,9 +430,8 @@ export const savePdfItem = async (req, res) => {
     const item = new saveModel({
       title: req.file.originalname.replace(".pdf", ""),
       url: ikResponse.url,
-      // 🔥 FIX: Reliable Free Unsplash Image for Documents (Dark Futuristic Theme)
       thumbnail:
-        "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop",
+        "https://plus.unsplash.com/premium_photo-1731951687922-1bb9d7722a49?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // Strict PDF Icon
       type: "pdf",
       tags: ["pdf", "archives"],
       collection: req.body.collection || "Archives",
@@ -449,6 +447,7 @@ export const savePdfItem = async (req, res) => {
     res.status(500).json({ message: "PDF sync failed" });
   }
 };
+
 // 9. Vision Processing (FIXED UPLOAD)
 // 9. Vision Processing (FIXED 500 ERROR & GEMINI CRASH)
 export const saveImageItem = async (req, res) => {

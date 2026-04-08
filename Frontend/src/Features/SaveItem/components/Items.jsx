@@ -233,8 +233,7 @@ const NodeCard = memo(
             alt={item.title || "preview"}
             onError={(e) => {
               e.target.onerror = null;
-              e.target.src =
-                "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop";
+              e.target.src = `https://image.thum.io/get/width/800/crop/600/${item.url}`;
             }}
           />
 
@@ -508,29 +507,25 @@ const Items = () => {
 
   const getSmartThumbnail = useCallback(
     (item) => {
-      const url = item?.url?.toLowerCase() || "";
-
-      // 🔥 ULTIMATE PDF FIX: Agar file PDF hai, toh humesha yeh mast si Unsplash image dikhao! (Old DB records bhi fix ho jayenge)
-      if (url.includes(".pdf") || item?.type === "pdf") {
-        return "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop";
-      }
-
       if (!item || !item.url)
-        return "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop";
+        return "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800";
 
       if (item.thumbnail && !item.thumbnail.includes("microlink")) {
         return resolveAssetProtocol(item.thumbnail);
       }
 
-      if (url.includes("youtube.com") || url.includes("youtu.be")) {
-        const vId = url.includes("youtu.be")
+      const url = item.url;
+      const lowUrl = url.toLowerCase();
+
+      if (lowUrl.includes("youtube.com") || lowUrl.includes("youtu.be")) {
+        const vId = lowUrl.includes("youtu.be")
           ? url.split("youtu.be/")[1]?.split("?")[0]
           : new URL(url).searchParams.get("v");
 
         return vId ? `https://img.youtube.com/vi/${vId}/hqdefault.jpg` : "";
       }
 
-      if (url.match(/\.(jpeg|jpg|png|webp|avif)$/))
+      if (lowUrl.match(/\.(jpeg|jpg|png|webp|avif)$/))
         return resolveAssetProtocol(url);
 
       return `https://image.thum.io/get/width/800/crop/600/${url}`;
