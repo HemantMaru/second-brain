@@ -227,7 +227,7 @@ const NodeCard = memo(
             onLoad={() => setImgLoaded(true)}
             className={`w-full h-full object-cover transition-all duration-700 ${
               imgLoaded
-                ? "opacity-60 group-hover:opacity-90 group-hover:scale-110"
+                ? "opacity-95 group-hover:opacity-100 group-hover:scale-110"
                 : "opacity-0"
             }`}
             alt={item.title || "preview"}

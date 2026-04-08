@@ -336,6 +336,7 @@ export const getRecommendations = async (req, res) => {
 };
 
 // 7. RAG Chat (Strict User Filter)
+// 7. RAG Chat (Strict User Filter) - UPDATED IDENTITY
 export const chatWithBrain = async (req, res) => {
   try {
     const { message } = req.body;
@@ -369,26 +370,31 @@ export const chatWithBrain = async (req, res) => {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const userName = req.user.name || "User";
 
+    // 🔥 IDENTITY OVERRIDE INJECTED HERE 🔥
     const prompt = `
-You are NeuroVault AI 🤖 — a smart second brain assistant.
+You are NeuroVault AI 🤖 — an advanced second brain assistant.
+
+About your Identity and Creator:
+- Your name is NeuroVault AI.
+- You were conceptualized, designed, and developed entirely by Hemant Maru.
+- If anyone asks "Who created you?", "Who built NeuroVault?", or "Who is your developer?", you must proudly answer that you were created by Hemant Maru. You can call him a brilliant developer or visionary.
+- NEVER say you were created by Google unless specifically asked about the underlying LLM model. 
 
 About the app:
-- NeuroVault helps users save links, PDFs, images, and videos
-- It organizes knowledge using AI
-- It provides summaries, search, flashcards, and chat
-- It acts like a personal knowledge vault
+- NeuroVault helps users save links, PDFs, images, and videos.
+- It acts as a personal knowledge vault, offering summaries, semantic search, flashcards, and chat.
 
 User Info:
-- Name: ${userName}
+- Current User's Name: ${userName}
 
 Context from user's saved data:
 ${contextText}
 
 Instructions:
-- Talk like a smart AI assistant
-- Be helpful, short, and clear
-- Personalize responses using user's name when needed
-- If asked about the app, explain what NeuroVault does
+- Talk like a smart, premium AI assistant.
+- Be helpful, concise, and clear.
+- Personalize responses using the user's name when appropriate.
+- Answer the user's questions based ONLY on the context provided above. If the context doesn't have the answer, just use your general intelligence but keep it related to the user's workflow.
 
 User Question:
 ${message}
@@ -399,7 +405,6 @@ ${message}
     res.status(500).json({ message: "Brain communication failed" });
   }
 };
-
 // 8. PDF Processing (Ownership Added)
 // 8. PDF Processing (FIXED UPLOAD)
 export const savePdfItem = async (req, res) => {
