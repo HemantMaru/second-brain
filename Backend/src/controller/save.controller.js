@@ -449,32 +449,42 @@ export const savePdfItem = async (req, res) => {
 };
 
 // 9. Vision Processing (FIXED UPLOAD)
+// 9. Vision Processing (FIXED 500 ERROR & GEMINI CRASH)
 export const saveImageItem = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "Image required" });
 
-    // 🔥 FIX: Convert buffer to Base64 for ImageKit
+    // 1. Convert buffer to Base64
     const fileBase64 = req.file.buffer.toString("base64");
 
+    // 2. Upload to ImageKit
     const ikResponse = await imagekit.upload({
       file: fileBase64,
       fileName: req.file.originalname,
       folder: "/neurovault/images",
     });
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const prompt =
-      "Describe this image for a search database in one paragraph.";
-    const imagePart = {
-      inlineData: {
-        data: req.file.buffer.toString("base64"),
-        mimeType: req.file.mimetype,
-      },
-    };
+    // 3. AI Processing (Safe Fallback)
+    let summary = "Visual fragment saved to gallery."; // Default fallback
+    try {
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      const prompt =
+        "Describe this image for a search database in one short paragraph.";
+      const imagePart = {
+        inlineData: {
+          data: fileBase64, // Base64 reuse kiya memory bachane ke liye
+          mimeType: req.file.mimetype,
+        },
+      };
 
-    const result = await model.generateContent([prompt, imagePart]);
-    const summary = result.response.text();
+      const result = await model.generateContent([prompt, imagePart]);
+      summary = result.response.text();
+    } catch (aiError) {
+      console.log("⚠️ Gemini Vision skipped this image:", aiError.message);
+      // Agar Gemini fail hua, toh app crash NAHI hoga. Default summary use ho jayegi.
+    }
 
+    // 4. Save to MongoDB
     const item = new saveModel({
       title: req.file.originalname,
       url: ikResponse.url,
@@ -490,7 +500,7 @@ export const saveImageItem = async (req, res) => {
     await item.save();
     res.status(201).json({ message: "Vision Analyzed", data: item });
   } catch (error) {
-    console.error("IMAGE ERROR:", error);
+    console.error("IMAGE ERROR (Main):", error);
     res.status(500).json({ message: "Vision sync failed" });
   }
 };
