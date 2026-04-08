@@ -54,9 +54,13 @@ import {
   History,
   Camera,
   AlertCircle,
-  CheckCircle2, // Added missing icon for copy feedback
+  CheckCircle2,
+  Code,
+  Briefcase,
+  Info,
+  PlusCircle,
+  ArrowRight,
 } from "lucide-react";
-
 // --- 🛰️ API Neural Gateway Services ---
 import {
   getRecommendations,
@@ -71,6 +75,116 @@ import { useSave } from "../hook/useSave";
 import Flashcard from "../components/Flashcard";
 
 // ===========================================================================
+// --- 🛰️ COMPONENT: ONBOARDING MODAL ---
+// ===========================================================================
+const OnboardingModal = ({ onClose }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-[9000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+  >
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      className="relative w-full max-w-md bg-[#0a0a0c] border border-indigo-500/30 rounded-[2rem] p-8 shadow-[0_0_50px_rgba(79,70,229,0.15)] overflow-hidden"
+    >
+      <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[80px] rounded-full pointer-events-none" />
+
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-[0_0_15px_rgba(79,70,229,0.4)]">
+          <BrainCircuit className="text-white" size={24} />
+        </div>
+        <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter">
+          Welcome to NeuroVault
+        </h2>
+      </div>
+
+      <p className="text-slate-400 text-sm mb-8 leading-relaxed relative z-10">
+        Save anything from the internet. Organize it seamlessly. Find it
+        instantly. Build your ultimate Second Brain.
+      </p>
+
+      <div className="space-y-4 mb-10 relative z-10">
+        {[
+          { icon: <Globe size={18} />, text: "Paste a link to save content" },
+          { icon: <LayoutGrid size={18} />, text: "View it in your dashboard" },
+          { icon: <Network size={18} />, text: "Explore it in the neural map" },
+        ].map((step, i) => (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.1 }}
+            key={i}
+            className="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/5"
+          >
+            <div className="text-indigo-400">{step.icon}</div>
+            <span className="text-sm font-bold text-slate-200">
+              {step.text}
+            </span>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="flex gap-4 relative z-10">
+        <button
+          onClick={onClose}
+          className="flex-1 py-4 bg-white/5 hover:bg-white/10 text-slate-300 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all border border-white/10"
+        >
+          Skip
+        </button>
+        <button
+          onClick={() => {
+            onClose();
+            document.getElementById("deep-ingestion-input")?.focus();
+          }}
+          className="flex-[2] py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-black uppercase text-[10px] tracking-widest transition-all shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:shadow-[0_0_30px_rgba(79,70,229,0.6)] flex items-center justify-center gap-2"
+        >
+          Get Started <ArrowRight size={16} />
+        </button>
+      </div>
+    </motion.div>
+  </motion.div>
+);
+
+// ===========================================================================
+// --- 🛰️ COMPONENT: MINIMAL FOOTER ---
+// ===========================================================================
+// ===========================================================================
+// --- 🛰️ COMPONENT: MINIMAL FOOTER ---
+// ===========================================================================
+const MinimalFooter = () => (
+  <footer className="mt-auto border-t border-white/5 bg-white/[0.02] backdrop-blur-md py-6 px-6 lg:px-10 flex flex-col sm:flex-row items-center justify-between gap-4 z-10 shrink-0">
+    <p className="text-[11px] font-bold tracking-widest text-slate-500 uppercase flex items-center gap-2">
+      Crafted with{" "}
+      <Zap size={14} className="text-yellow-500 fill-yellow-500/20" /> by Hemant
+      Maru
+    </p>
+    <div className="flex items-center gap-6">
+      <a
+        href="https://github.com/HemantMaru"
+        target="_blank"
+        rel="noreferrer"
+        title="GitHub"
+        className="text-slate-500 hover:text-white transition-all hover:scale-110 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] flex items-center gap-2"
+      >
+        {/* Github ki jagah generic Code icon */}
+        <Code size={18} />
+      </a>
+      <a
+        href="https://www.linkedin.com/in/hemant-maru-63012029a"
+        target="_blank"
+        rel="noreferrer"
+        title="LinkedIn"
+        className="text-slate-500 hover:text-white transition-all hover:scale-110 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] flex items-center gap-2"
+      >
+        {/* LinkedIn ki jagah generic Briefcase icon */}
+        <Briefcase size={18} />
+      </a>
+    </div>
+  </footer>
+);
+// ===========================================================================
 // --- 🛰️ COMPONENT: NODE CARD (OPTIMIZED) ---
 // ===========================================================================
 const NodeCard = memo(
@@ -83,7 +197,7 @@ const NodeCard = memo(
     classify,
     contentIcon,
     autoTags,
-    isCopied, // Prop for share feedback
+    isCopied,
   }) => {
     const [imgLoaded, setImgLoaded] = useState(false);
     const type = classify(item.url);
@@ -135,7 +249,10 @@ const NodeCard = memo(
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/20 to-transparent opacity-90" />
-          <div className="absolute top-6 left-6 flex items-center gap-3 bg-black/80 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10 shadow-2xl z-10">
+          <div
+            className="absolute top-6 left-6 flex items-center gap-3 bg-black/80 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10 shadow-2xl z-10 title-tooltip"
+            title="Saved item"
+          >
             {contentIcon}
             <span className="text-[9px] font-black uppercase tracking-widest text-white">
               {type}
@@ -170,7 +287,10 @@ const NodeCard = memo(
 
             <div className="flex items-center gap-2 opacity-40 group-hover:opacity-100 transition-opacity pt-1">
               <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_5px_#6366f1]" />
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">
+              <span
+                className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate title-tooltip"
+                title="Your saved knowledge"
+              >
                 {item.collection || "Omni_Vault"}
               </span>
             </div>
@@ -179,6 +299,7 @@ const NodeCard = memo(
           <div className="flex items-center justify-between pt-6 border-t border-white/5 mt-auto">
             <div className="flex gap-5">
               <button
+                title="Pin to Dashboard"
                 onClick={(e) => {
                   e.stopPropagation();
                   onPin(item);
@@ -192,6 +313,7 @@ const NodeCard = memo(
                 <Pin size={18} fill={item.isPinned ? "currentColor" : "none"} />
               </button>
               <button
+                title="Share Node"
                 onClick={(e) => {
                   e.stopPropagation();
                   onShare(item);
@@ -238,13 +360,23 @@ const Items = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [focusedNode, setFocusedNode] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+
+  // Onboarding State
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    return !localStorage.getItem("neurovault_onboarded");
+  });
+
+  const handleDismissOnboarding = () => {
+    localStorage.setItem("neurovault_onboarded", "true");
+    setShowOnboarding(false);
+  };
+
   const [notification, setNotification] = useState({
     active: false,
     text: "",
     type: "info",
   });
 
-  // 🔥 Optimistic UI State for Instant Pinning
   const [localPins, setLocalPins] = useState({});
 
   const handleLogout = useCallback(async () => {
@@ -323,8 +455,7 @@ const Items = () => {
   }, [handleGetCreateSave]);
 
   useEffect(() => {
-    // Scroll lock for modals
-    if (focusedNode || isRecallOpen) {
+    if (focusedNode || isRecallOpen || showOnboarding) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "auto";
@@ -332,7 +463,7 @@ const Items = () => {
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [focusedNode, isRecallOpen]);
+  }, [focusedNode, isRecallOpen, showOnboarding]);
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -399,7 +530,6 @@ const Items = () => {
     [resolveAssetProtocol],
   );
 
-  // Execute deep scan supports 'Enter' key now
   const executeDeepScan = useCallback(async () => {
     if (!ytInput.trim())
       return pushNotification("URL required for ingestion.", "error");
@@ -447,7 +577,7 @@ const Items = () => {
       const url = `${window.location.origin}/share/${item.shareId || item._id}`;
       try {
         await navigator.clipboard.writeText(url);
-        setCopiedId(item._id); // Show success feedback
+        setCopiedId(item._id);
         pushNotification("Link copied to clipboard.", "success");
         setTimeout(() => setCopiedId(null), 2000);
       } catch (err) {
@@ -457,12 +587,10 @@ const Items = () => {
     [pushNotification],
   );
 
-  // 🔥 FAST OPTIMISTIC PINNING IMPLEMENTED HERE
   const handleOptimisticPin = async (item) => {
     const currentPinned =
       localPins[item._id] !== undefined ? localPins[item._id] : item.isPinned;
 
-    // Immediate UI update
     setLocalPins((prev) => ({ ...prev, [item._id]: !currentPinned }));
     if (focusedNode && focusedNode._id === item._id) {
       setFocusedNode((prev) =>
@@ -473,7 +601,6 @@ const Items = () => {
     try {
       await handleTogglePin(item._id);
     } catch (error) {
-      // Revert if failed
       setLocalPins((prev) => ({ ...prev, [item._id]: currentPinned }));
       if (focusedNode && focusedNode._id === item._id) {
         setFocusedNode((prev) =>
@@ -502,7 +629,6 @@ const Items = () => {
     }, 0);
   }, []);
 
-  // 🔥 NULL CHECK CRASH FIX APPLIED HERE 🔥
   const persistHighlight = useCallback(
     async (e) => {
       e.preventDefault();
@@ -510,14 +636,13 @@ const Items = () => {
 
       if (!highlightBuffer.itemId || !highlightBuffer.text) return;
 
-      // Hide popup instantly
       setHighlightBuffer((prev) => ({ ...prev, visible: false }));
 
       try {
         await addHighlightAPI(highlightBuffer.itemId, highlightBuffer.text);
 
         setFocusedNode((prev) => {
-          if (!prev) return null; // Prevents crash if modal was closed before promise resolves
+          if (!prev) return null;
           return {
             ...prev,
             highlights: [
@@ -527,9 +652,7 @@ const Items = () => {
           };
         });
 
-        // Safely deselect
         window.getSelection()?.removeAllRanges();
-
         await handleGetCreateSave();
         pushNotification("Synapse fragment indexed.", "success");
       } catch (err) {
@@ -554,7 +677,6 @@ const Items = () => {
       })
       .map((item) => ({
         ...item,
-        // Override with optimistic state if it exists
         isPinned:
           localPins[item._id] !== undefined
             ? localPins[item._id]
@@ -685,6 +807,12 @@ const Items = () => {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {showOnboarding && (
+          <OnboardingModal onClose={handleDismissOnboarding} />
+        )}
+      </AnimatePresence>
+
       {highlightBuffer.visible && (
         <div
           className="fixed z-[10000] neural-action-popup"
@@ -771,6 +899,7 @@ const Items = () => {
                   </div>
                 </div>
                 <button
+                  title="Disconnect from NeuroVault"
                   onClick={handleLogout}
                   className="w-full flex items-center gap-4 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-2xl transition-all font-black uppercase text-[10px] tracking-widest"
                 >
@@ -831,6 +960,7 @@ const Items = () => {
                 </div>
               </div>
               <button
+                title="Disconnect from NeuroVault"
                 onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-red-400 hover:bg-red-400/10 rounded-xl transition-all font-bold text-[11px] uppercase tracking-widest relative z-[130] pointer-events-auto"
               >
@@ -843,6 +973,7 @@ const Items = () => {
                 {user.name.charAt(0)}
               </div>
               <button
+                title="Disconnect from NeuroVault"
                 onClick={handleLogout}
                 className="p-2 text-red-400 hover:bg-red-400/10 hover:text-red-300 rounded-xl transition-all relative z-[130] pointer-events-auto"
               >
@@ -876,7 +1007,6 @@ const Items = () => {
                 className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 lg:py-4 pl-14 pr-12 text-sm text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all placeholder:text-slate-500"
               />
 
-              {/* Real-time visual feedback for searching */}
               <AnimatePresence>
                 {isSearching && (
                   <motion.div
@@ -931,11 +1061,26 @@ const Items = () => {
                   Accelerator Active
                 </span>
               </div>
-              <h2 className="text-3xl lg:text-4xl font-black text-white italic uppercase leading-none tracking-tighter drop-shadow-md">
-                Deep Ingestion
-              </h2>
+
+              <div className="flex items-center gap-3">
+                <h2 className="text-3xl lg:text-4xl font-black text-white italic uppercase leading-none tracking-tighter drop-shadow-md">
+                  Deep Ingestion
+                </h2>
+                <span className="group relative cursor-help hidden sm:block">
+                  <Info
+                    size={18}
+                    className="text-slate-500 hover:text-indigo-400 transition-colors"
+                  />
+                  <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 w-48 px-4 py-2.5 bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl text-[11px] text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-2xl normal-case tracking-normal not-italic font-medium">
+                    Save content from any link instantly.
+                  </span>
+                </span>
+              </div>
               <p className="text-slate-400 text-sm max-w-lg leading-relaxed">
-                Instantly synchronize social nodes, transcripts and web nodes
+                <span className="text-white font-semibold">
+                  Save content from any link.
+                </span>{" "}
+                Instantly synchronize social nodes, transcripts, and web nodes
                 into cognitive persistent summaries.
               </p>
             </div>
@@ -945,6 +1090,7 @@ const Items = () => {
                   <Globe size={20} />
                 </div>
                 <input
+                  id="deep-ingestion-input"
                   value={ytInput}
                   onChange={(e) => setYtInput(e.target.value)}
                   onKeyDown={handleYtKeyDown}
@@ -1108,24 +1254,43 @@ const Items = () => {
                       getThumb={getSmartThumbnail}
                       classify={classifyContentType}
                       contentIcon={<ContentIcon url={item.url} />}
-                      isCopied={copiedId === item._id} // Pass specific item status
+                      isCopied={copiedId === item._id}
                     />
                   ))}
                 </AnimatePresence>
               </motion.div>
             </LayoutGroup>
           ) : (
-            <div className="flex flex-col items-center justify-center py-40 lg:py-60 opacity-40 text-center">
-              <Unplug size={80} className="mb-8 text-slate-500" />
-              <h3 className="text-4xl lg:text-5xl font-black uppercase tracking-tighter italic text-white drop-shadow-lg">
-                Sector Offline
+            <div className="flex flex-col items-center justify-center py-24 lg:py-40 opacity-90 text-center animate-in">
+              <div className="w-24 h-24 bg-white/5 border border-white/10 rounded-full flex items-center justify-center mb-8 shadow-inner relative">
+                <Unplug size={40} className="text-slate-500" />
+                <div className="absolute inset-0 rounded-full border border-indigo-500/20 animate-ping" />
+              </div>
+              <h3 className="text-3xl lg:text-4xl font-black uppercase tracking-tighter italic text-white drop-shadow-lg mb-4">
+                No Data Yet
               </h3>
-              <p className="text-[10px] lg:text-xs font-black uppercase tracking-[0.4em] lg:tracking-[0.5em] mt-4 text-slate-400">
-                System awaiting cognitive synchronization
+              <p className="text-sm text-slate-400 mb-10 max-w-md leading-relaxed">
+                Your neural vault is currently empty. Start by adding your first
+                link to ingest content into your second brain.
               </p>
+              <button
+                onClick={() => {
+                  document.getElementById("deep-ingestion-input")?.focus();
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="px-8 py-4 bg-indigo-600/10 border border-indigo-500/30 text-indigo-400 rounded-full font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 hover:text-white hover:border-indigo-500 hover:shadow-[0_0_30px_rgba(79,70,229,0.4)] transition-all flex items-center gap-3 active:scale-95 group"
+              >
+                <PlusCircle
+                  size={18}
+                  className="group-hover:rotate-90 transition-transform"
+                />{" "}
+                Add First Node
+              </button>
             </div>
           )}
         </div>
+
+        <MinimalFooter />
       </main>
 
       <AnimatePresence>
@@ -1240,10 +1405,16 @@ const NodeExpansionModal = ({
               {node.title || "Untitled"}
             </h2>
             <div className="flex flex-wrap gap-4">
-              <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 flex items-center gap-3 text-[10px] lg:text-xs font-bold text-slate-200 uppercase tracking-widest shadow-lg">
+              <div
+                className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 flex items-center gap-3 text-[10px] lg:text-xs font-bold text-slate-200 uppercase tracking-widest shadow-lg title-tooltip"
+                title="Content Type"
+              >
                 <Globe size={14} /> {classify(node.url)} Node
               </div>
-              <div className="bg-indigo-600/20 backdrop-blur-md px-4 py-2 rounded-full border border-indigo-500/30 flex items-center gap-3 text-[10px] lg:text-xs font-bold text-indigo-300 uppercase tracking-widest shadow-[0_0_15px_rgba(79,70,229,0.3)]">
+              <div
+                className="bg-indigo-600/20 backdrop-blur-md px-4 py-2 rounded-full border border-indigo-500/30 flex items-center gap-3 text-[10px] lg:text-xs font-bold text-indigo-300 uppercase tracking-widest shadow-[0_0_15px_rgba(79,70,229,0.3)] title-tooltip"
+                title="Category Tag"
+              >
                 <Tag size={14} /> {node.category || "General Intel"}
               </div>
             </div>
