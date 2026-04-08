@@ -6,42 +6,39 @@ import AIAssistant from "../Features/SaveItem/Pages/AIAssistant";
 import { useDispatch } from "react-redux";
 import { authSuccess, logout } from "../Features/SaveItem/auth.slices";
 import { getMeAPI } from "../Features/SaveItem/services/auth.api";
-import { useState } from "react";
+
+// 🚀 IMPORT CONTEXT HOOK HERE
+import { useGlobalLoader } from "../Features/SaveItem/components/LoadingContext.jsx";
 
 const App = () => {
   const dispatch = useDispatch();
+
+  // 🚀 EXTRACT GLOBAL LOADER FUNCTIONS
+  const { showLoader, hideLoader } = useGlobalLoader();
+
   useEffect(() => {
     console.log("CURRENT PATH:", window.location.pathname);
   }, []);
-  const [loading, setLoading] = useState(true);
-  console.log("APP LOADED");
+
   useEffect(() => {
     const checkAuth = async () => {
+      // 🚀 LOADER CHALU KARO API CALL SE PEHLE
+      showLoader();
       try {
         const data = await getMeAPI();
         dispatch(authSuccess({ user: data.user }));
       } catch {
         dispatch(logout());
       } finally {
-        setLoading(false);
+        // 🚀 LOADER BAND KARO API CALL KE BAAD
+        hideLoader();
       }
     };
 
     checkAuth();
-  }, [dispatch]);
+  }, [dispatch, showLoader, hideLoader]); // dependencies updated
 
-  if (loading) {
-    return (
-      <div className="loader-container">
-        <div className="orbital-spinner">
-          <div className="orbital-ring"></div>
-          <div className="orbital-ring"></div>
-          <div className="orbital-ring"></div>
-          <div className="orbital-core"></div>
-        </div>
-      </div>
-    );
-  }
+  // Return me ab loader dikhane ki zarurat nahi, GlobalLoader apne aap handle kar lega
   return (
     <>
       <RouterProvider router={routes} />

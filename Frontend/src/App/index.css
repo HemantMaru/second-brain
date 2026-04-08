@@ -10,24 +10,15 @@
   scrollbar-width: none; /* Firefox */
 }
 /* Container ko 3D perspective dena zaroori hai */
-.loader-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  /* Agar tera background dark nahi hai toh isko comment kar dena */
-  background-color: #020204;
-  perspective: 1000px; /* 3D depth activate karne ke liye */
-  overflow: hidden;
-}
-
+/* Loader.css */
 /* Main 3D Container */
 .orbital-spinner {
   width: 120px;
   height: 120px;
   position: relative;
   transform-style: preserve-3d;
-  animation: core-spin 4s linear infinite; /* Pura setup bhi slowly ghoomega */
+  animation: core-spin 4s linear infinite;
+  perspective: 1000px;
 }
 
 /* The Intersecting Rings */
@@ -80,7 +71,6 @@
 }
 
 /* --- 3D ANIMATION KEYFRAMES --- */
-
 @keyframes spin-ring1 {
   0% {
     transform: rotateX(35deg) rotateY(-45deg) rotateZ(0deg);
