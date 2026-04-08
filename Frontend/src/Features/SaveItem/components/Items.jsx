@@ -224,6 +224,8 @@ const NodeCard = memo(
 
           <img
             src={thumb}
+            loading="lazy"
+            decoding="async"
             onLoad={() => setImgLoaded(true)}
             className={`w-full h-full object-cover transition-all duration-700 ${
               imgLoaded
@@ -361,7 +363,7 @@ const Items = () => {
   const [copiedId, setCopiedId] = useState(null);
 
   // 🚀 INFINITE SCROLLING STATE & REFS
-  const [displayCount, setDisplayCount] = useState(12);
+  const [displayCount, setDisplayCount] = useState(6);
   const loadMoreRef = useRef(null);
 
   // Onboarding State
@@ -383,12 +385,13 @@ const Items = () => {
   const [localPins, setLocalPins] = useState({});
 
   const handleLogout = useCallback(async () => {
+    dispatch(logout()); // pehle logout dikha de
+    navigate("/auth"); // turant redirect
+
     try {
-      await logoutAPI();
-      dispatch(logout());
-      navigate("/auth");
+      await logoutAPI(); // baad me call
     } catch (err) {
-      console.error("Logout failed");
+      console.log("error");
     }
   }, [dispatch, navigate]);
 
@@ -468,26 +471,33 @@ const Items = () => {
     };
   }, [focusedNode, isRecallOpen, showOnboarding]);
 
+  const debounceRef = useRef(null);
   useEffect(() => {
-    const timer = setTimeout(async () => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(async () => {
       if (searchQuery.trim() === "") {
         setIsSearching(false);
         handleGetCreateSave();
         return;
       }
+
       setIsSearching(true);
+
       try {
         const response = await searchItems(searchQuery);
         dispatch(setsaveItem(response.data || []));
       } catch (err) {
-        pushNotification("Semantic Search pathway corrupted.", "error");
+        pushNotification("Search failed", "error");
       } finally {
         setIsSearching(false);
       }
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [searchQuery, dispatch, handleGetCreateSave, pushNotification]);
+    }, 500);
 
+    return () => clearTimeout(debounceRef.current);
+  }, [searchQuery]);
   const classifyContentType = useCallback((url) => {
     if (!url) return "Web";
     const str = url.toLowerCase();
@@ -745,7 +755,7 @@ const Items = () => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          setDisplayCount((prev) => prev + 12);
+          setDisplayCount((prev) => prev + 6);
         }
       },
       { threshold: 0.1 },

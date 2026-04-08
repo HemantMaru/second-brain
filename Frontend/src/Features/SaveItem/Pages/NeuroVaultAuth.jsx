@@ -133,22 +133,26 @@ export default function NeuroVaultAuth() {
 
   const handleAction = async (e) => {
     e.preventDefault();
+
     dispatch(authStart());
 
-    try {
-      let response;
-      if (authMode === "signin") {
-        response = await loginAPI(formData.email, formData.password);
-      } else {
-        response = await registerAPI(formData);
-      }
+    // ⚡ UI ko instantly responsive bana
+    setTimeout(async () => {
+      try {
+        let response;
 
-      // Success logic
-      dispatch(authSuccess({ user: response.user, token: response.token }));
-      navigate("/saved"); // Redirect to protected route
-    } catch (err) {
-      dispatch(authFailure(err.message || "Authentication Failed"));
-    }
+        if (authMode === "signin") {
+          response = await loginAPI(formData.email, formData.password);
+        } else {
+          response = await registerAPI(formData);
+        }
+
+        dispatch(authSuccess({ user: response.user, token: response.token }));
+        navigate("/saved");
+      } catch (err) {
+        dispatch(authFailure(err.message || "Authentication Failed"));
+      }
+    }, 0);
   };
 
   return (
@@ -264,7 +268,10 @@ export default function NeuroVaultAuth() {
             >
               <span className="relative z-10 flex items-center justify-center gap-2">
                 {loading ? (
-                  <Loader2 className="animate-spin" size={18} />
+                  <>
+                    <Loader2 className="animate-spin" size={18} />
+                    Please wait...
+                  </>
                 ) : authMode === "signin" ? (
                   "Establish Session"
                 ) : (
