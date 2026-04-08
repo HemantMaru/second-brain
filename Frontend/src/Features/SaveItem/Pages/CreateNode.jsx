@@ -203,7 +203,8 @@ const CreateNode = () => {
       }
 
       setStatus({ message: "Node successfully indexed!", type: "success" });
-      setTimeout(() => navigate("/saved"), 1500);
+      // 🔥 FIX: Artificial delay drastically reduced to 300ms for snappy user experience
+      setTimeout(() => navigate("/saved"), 300);
     } catch (err) {
       console.error("Upload Error:", err);
       setStatus({
