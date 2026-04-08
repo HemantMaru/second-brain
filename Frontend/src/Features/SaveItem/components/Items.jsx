@@ -61,6 +61,7 @@ import {
   PlusCircle,
   ArrowRight,
 } from "lucide-react";
+
 // --- 🛰️ API Neural Gateway Services ---
 import {
   getRecommendations,
@@ -150,9 +151,6 @@ const OnboardingModal = ({ onClose }) => (
 // ===========================================================================
 // --- 🛰️ COMPONENT: MINIMAL FOOTER ---
 // ===========================================================================
-// ===========================================================================
-// --- 🛰️ COMPONENT: MINIMAL FOOTER ---
-// ===========================================================================
 const MinimalFooter = () => (
   <footer className="mt-auto border-t border-white/5 bg-white/[0.02] backdrop-blur-md py-6 px-6 lg:px-10 flex flex-col sm:flex-row items-center justify-between gap-4 z-10 shrink-0">
     <p className="text-[11px] font-bold tracking-widest text-slate-500 uppercase flex items-center gap-2">
@@ -168,7 +166,6 @@ const MinimalFooter = () => (
         title="GitHub"
         className="text-slate-500 hover:text-white transition-all hover:scale-110 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] flex items-center gap-2"
       >
-        {/* Github ki jagah generic Code icon */}
         <Code size={18} />
       </a>
       <a
@@ -178,12 +175,12 @@ const MinimalFooter = () => (
         title="LinkedIn"
         className="text-slate-500 hover:text-white transition-all hover:scale-110 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] flex items-center gap-2"
       >
-        {/* LinkedIn ki jagah generic Briefcase icon */}
         <Briefcase size={18} />
       </a>
     </div>
   </footer>
 );
+
 // ===========================================================================
 // --- 🛰️ COMPONENT: NODE CARD (OPTIMIZED) ---
 // ===========================================================================
@@ -318,7 +315,9 @@ const NodeCard = memo(
                   e.stopPropagation();
                   onShare(item);
                 }}
-                className={`${isCopied ? "text-green-400" : "text-slate-600"} hover:text-white hover:scale-125 active:scale-90 transition-all`}
+                className={`${
+                  isCopied ? "text-green-400" : "text-slate-600"
+                } hover:text-white hover:scale-125 active:scale-90 transition-all`}
               >
                 {isCopied ? <CheckCircle2 size={18} /> : <Share2 size={18} />}
               </button>
@@ -360,6 +359,10 @@ const Items = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [focusedNode, setFocusedNode] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+
+  // 🚀 INFINITE SCROLLING STATE & REFS
+  const [displayCount, setDisplayCount] = useState(12);
+  const loadMoreRef = useRef(null);
 
   // Onboarding State
   const [showOnboarding, setShowOnboarding] = useState(() => {
@@ -730,6 +733,34 @@ const Items = () => {
     } catch (err) {
       console.error("Discovery failed");
     }
+  }, []);
+
+  // 🚀 RESET DISPLAY COUNT ON FILTER CHANGES
+  useEffect(() => {
+    setDisplayCount(12);
+  }, [activeTab, activeCategory, searchQuery]);
+
+  // 🚀 INTERSECTION OBSERVER FOR INFINITE SCROLLING
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setDisplayCount((prev) => prev + 12);
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    const currentRef = loadMoreRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
   }, []);
 
   const SidebarItem = ({ icon: Icon, label, path, active }) => (
@@ -1232,15 +1263,15 @@ const Items = () => {
             </motion.section>
           )}
 
-          {/* GRID VIEW */}
+          {/* GRID VIEW WITH INFINITE SCROLL */}
           {cognitivePool.length > 0 ? (
             <LayoutGroup>
               <motion.div
                 layout
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 gap-10 pb-20"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 gap-10 pb-10"
               >
                 <AnimatePresence mode="popLayout">
-                  {cognitivePool.map((item) => (
+                  {cognitivePool.slice(0, displayCount).map((item) => (
                     <NodeCard
                       key={item._id}
                       item={item}
@@ -1259,6 +1290,19 @@ const Items = () => {
                   ))}
                 </AnimatePresence>
               </motion.div>
+
+              {/* Intersection Observer Target for Loading More */}
+              {displayCount < cognitivePool.length && (
+                <div
+                  ref={loadMoreRef}
+                  className="w-full h-24 flex items-center justify-center pb-10"
+                >
+                  <Loader2
+                    className="animate-spin text-indigo-500/60"
+                    size={32}
+                  />
+                </div>
+              )}
             </LayoutGroup>
           ) : (
             <div className="flex flex-col items-center justify-center py-24 lg:py-40 opacity-90 text-center animate-in">
